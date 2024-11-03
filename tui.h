@@ -89,6 +89,10 @@ enum BoxChar {
     BOX_CHAR_COUNT
 };
 
+enum ElementType {
+    SLIDER,
+};
+
 struct ColorInfo {
     enum ColorFG fg;
     enum ColorBG bg;
@@ -109,11 +113,17 @@ struct Slider {
     struct ColorInfo clrs;
 };
 
+struct Element {
+    void *ptr;
+    enum ElementType type;
+    bool isFoc;
+};
+
 struct Tui {
-    struct Slider *sliders[LIST_BUF_SIZE];
+    struct Element elements[LIST_BUF_SIZE];
     struct ColorInfo sliderClrs;
-    int focSliderIdx;
-    int slidersLen;
+    int focElementIdx;
+    int elementsLen;
     int x;
     int y;
     int width;
@@ -132,14 +142,15 @@ extern const char *boxChars[STYLE_COUNT][BOX_CHAR_COUNT];
 void tuiInit(struct Tui *tui, int x, int y, int width, int height, char *label);
 void tuiSetDefaultSliderClrs(struct Tui *tui, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
 void tuiDraw(struct Tui *tui);
-void tuiNextSlider(struct Tui *tui);
-void tuiPrevSlider(struct Tui *tui);
+void tuiNextElement(struct Tui *tui);
+void tuiPrevElement(struct Tui *tui);
 
 void tuiAddSlider(struct Tui *tui, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label);
 
 void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
-void sliderDraw(struct Slider *slider);
-void sliderIncr(struct Slider *slider, int incr);
+void elementDraw(struct Element element);
+void elementIncr(struct Element element);
+void elementDecr(struct Element element);
 
 void hello();
 void resetTerm();

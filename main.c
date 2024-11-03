@@ -93,16 +93,16 @@ int main() {
             quit = true;
             break;
         case 'k':
-            sliderIncr(tui.sliders[tui.focSliderIdx], 1);
+            elementIncr(tui.elements[tui.focElementIdx]);
             break;
         case 'j':
-            sliderIncr(tui.sliders[tui.focSliderIdx], -1);
+            elementDecr(tui.elements[tui.focElementIdx]);
             break;
         case 'h':
-            tuiPrevSlider(&tui);
+            tuiPrevElement(&tui);
             break;
         case 'l':
-            tuiNextSlider(&tui);
+            tuiNextElement(&tui);
             break;
         default:
             input1.gate = true;

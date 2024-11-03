@@ -15,7 +15,7 @@ const struct ColorInfo defaultSliderClrs = {
 };
 
 void tuiInit(struct Tui *tui, int x, int y, int width, int height, char *label) {
-    tui->slidersLen = 0;
+    tui->elementsLen = 0;
     tui->x = x;
     tui->y = y;
     tui->width = width;
@@ -26,7 +26,7 @@ void tuiInit(struct Tui *tui, int x, int y, int width, int height, char *label) 
     tui->sliderClrs.bg = defaultSliderClrs.bg;
     tui->sliderClrs.fgFoc = defaultSliderClrs.fgFoc;
     tui->sliderClrs.bgFoc = defaultSliderClrs.bgFoc;
-    tui->focSliderIdx = 0;
+    tui->focElementIdx = 0;
 }
 
 void tuiSetDefaultSliderClrs(struct Tui *tui, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc) {
@@ -34,29 +34,6 @@ void tuiSetDefaultSliderClrs(struct Tui *tui, enum ColorFG fg, enum ColorBG bg, 
     tui->sliderClrs.bg = bg;
     tui->sliderClrs.fgFoc = fgFoc;
     tui->sliderClrs.bgFoc = bgFoc;
-}
-
-
-void tuiAddSlider(struct Tui *tui, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label) {
-    slider->x = tui->x + x;
-    slider->y = tui->y + y;
-    slider->height = height;
-    slider->minVal = minVal;
-    slider->maxVal = maxVal;
-    slider->label = label;
-
-    slider->clrs.fg = tui->sliderClrs.fg;
-    slider->clrs.bg = tui->sliderClrs.bg;
-    slider->clrs.fgFoc = tui->sliderClrs.fgFoc;
-    slider->clrs.bgFoc = tui->sliderClrs.bgFoc;
-    
-    slider->divVal = 0;
-    slider->val= 0;
-
-    tui->sliders[tui->slidersLen] = slider;
-    ++tui->slidersLen;
-
-    sliderDraw(slider);
 }
 
 void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc) {
@@ -97,6 +74,40 @@ void sliderDraw(struct Slider *slider) {
     fflush(stdout);
 }
 
+void tuiAddSlider(struct Tui *tui, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label) {
+    slider->x = tui->x + x;
+    slider->y = tui->y + y;
+    slider->height = height;
+    slider->minVal = minVal;
+    slider->maxVal = maxVal;
+    slider->label = label;
+
+    slider->clrs.fg = tui->sliderClrs.fg;
+    slider->clrs.bg = tui->sliderClrs.bg;
+    slider->clrs.fgFoc = tui->sliderClrs.fgFoc;
+    slider->clrs.bgFoc = tui->sliderClrs.bgFoc;
+    
+    slider->divVal = 0;
+    slider->val= 0;
+
+    tui->elements[tui->elementsLen].ptr = (void *)slider;
+    tui->elements[tui->elementsLen].type = SLIDER;
+    ++tui->elementsLen;
+
+    sliderDraw(slider);
+}
+
+void elementDraw(struct Element element) {
+    switch (element.type) {
+    case SLIDER: {
+        struct Slider *slider = (struct Slider *)element.ptr;
+        slider->isFoc = element.isFoc;
+        sliderDraw(slider);
+        break;
+    }
+    }
+}
+
 void sliderIncr(struct Slider *slider, int incr) {
     if (slider == NULL) return;
 
@@ -109,36 +120,51 @@ void sliderIncr(struct Slider *slider, int incr) {
         slider->divVal += incr;
     }
     slider->val = (double) slider->divVal / maxDivs * (slider->maxVal - slider->minVal) + slider->minVal;
+    sliderDraw(slider);
 }
 
-void tuiNextSlider(struct Tui *tui) {
-    sliderDraw(tui->sliders[tui->focSliderIdx]);
-    tui->sliders[tui->focSliderIdx]->isFoc = false;
-
-    if (tui->focSliderIdx == tui->slidersLen - 1) {
-        tui->focSliderIdx = 0;
-    } else {
-        ++tui->focSliderIdx;
+void elementIncr(struct Element element) {
+    switch (element.type) {
+    case SLIDER:
+        sliderIncr((struct Slider *)element.ptr, 1);
     }
-
-    tui->sliders[tui->focSliderIdx]->isFoc = true;
-
-    sliderDraw(tui->sliders[tui->focSliderIdx]);
 }
 
-void tuiPrevSlider(struct Tui *tui) {
-    sliderDraw(tui->sliders[tui->focSliderIdx]);
-    tui->sliders[tui->focSliderIdx]->isFoc = false;
+void elementDecr(struct Element element) {
+    switch (element.type) {
+    case SLIDER:
+        sliderIncr((struct Slider *)element.ptr, -1);
+    }
+}
 
-    if (tui->focSliderIdx == 0) {
-        tui->focSliderIdx = tui->slidersLen - 1;
+void tuiNextElement(struct Tui *tui) {
+    tui->elements[tui->focElementIdx].isFoc = false;
+    elementDraw(tui->elements[tui->focElementIdx]);
+
+    if (tui->focElementIdx == tui->elementsLen - 1) {
+        tui->focElementIdx = 0;
     } else {
-        --tui->focSliderIdx;
+        ++tui->focElementIdx;
     }
 
-    tui->sliders[tui->focSliderIdx]->isFoc = true;
+    tui->elements[tui->focElementIdx].isFoc = true;
 
-    sliderDraw(tui->sliders[tui->focSliderIdx]);
+    elementDraw(tui->elements[tui->focElementIdx]);
+}
+
+void tuiPrevElement(struct Tui *tui) {
+    elementDraw(tui->elements[tui->focElementIdx]);
+    tui->elements[tui->focElementIdx].isFoc = false;
+
+    if (tui->focElementIdx == 0) {
+        tui->focElementIdx = tui->elementsLen - 1;
+    } else {
+        --tui->focElementIdx;
+    }
+
+    tui->elements[tui->focElementIdx].isFoc = true;
+
+    elementDraw(tui->elements[tui->focElementIdx]);
 }
 
 void boxDraw(int x, int y, int width, int height, enum BoxStyle style, char *label) {
@@ -179,9 +205,9 @@ void boxDraw(int x, int y, int width, int height, enum BoxStyle style, char *lab
 
 void tuiDraw(struct Tui *tui) {
     boxDraw(tui->x, tui->y, tui->width, tui->height, THIN, tui->label);
-    for (int i = 0; i < tui->slidersLen; i++) {
-        sliderDraw(tui->sliders[i]);
-    }
+    //for (int i = 0; i < tui->slidersLen; i++) {
+    //    sliderDraw(tui->sliders[i]);
+    //}
 }
 
 
