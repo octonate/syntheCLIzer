@@ -146,7 +146,6 @@ void boxDraw(int x, int y, int width, int height, enum BoxStyle style, char *lab
     
     int labelLen = strlen(label);
     if (labelLen > width - 2) {
-        label[width - 2] = '\0';
         labelLen = width - 2;
     }
 
@@ -154,7 +153,7 @@ void boxDraw(int x, int y, int width, int height, enum BoxStyle style, char *lab
     printf("%s", TEXT_RESET);
 
     printf("%s", boxChars[style][UPPER_LEFT_CORNER]);
-    printf("%s", label);
+    printf("%.*s", labelLen, label);
     for (int i = 0; i < width - labelLen - 2; i++) {
         printf("%s", boxChars[style][HOR_LINE]);
     }
@@ -179,7 +178,7 @@ void boxDraw(int x, int y, int width, int height, enum BoxStyle style, char *lab
 }
 
 void tuiDraw(struct Tui *tui) {
-    boxDraw(tui->x, tui->y, tui->width, tui->height, THICK, tui->label);
+    boxDraw(tui->x, tui->y, tui->width, tui->height, THIN, tui->label);
     for (int i = 0; i < tui->slidersLen; i++) {
         sliderDraw(tui->sliders[i]);
     }

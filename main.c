@@ -21,7 +21,7 @@ int main() {
     hello();
 
     struct Tui tui;
-    tuiInit(&tui, 10, 10, 40, 10, "env");
+    tuiInit(&tui, 10, 10, 9, 9, "12345678");
 
     struct Slider sliderA, sliderD, sliderS, sliderR;
     tuiAddSlider(&tui, &sliderA, 1, 1, 4, 0, 1000, 'a');
