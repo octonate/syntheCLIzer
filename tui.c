@@ -90,7 +90,7 @@ void tuiAddSlider(struct Tui *tui, struct Slider *slider, int x, int y, int heig
     slider->divVal = 0;
     slider->val= 0;
 
-    tui->elements[tui->elementsLen].ptr = (void *)slider;
+    tui->elements[tui->elementsLen].ptr.slider = slider;
     tui->elements[tui->elementsLen].type = SLIDER;
     ++tui->elementsLen;
 
@@ -99,12 +99,12 @@ void tuiAddSlider(struct Tui *tui, struct Slider *slider, int x, int y, int heig
 
 void elementDraw(struct Element element) {
     switch (element.type) {
-    case SLIDER: {
-        struct Slider *slider = (struct Slider *)element.ptr;
-        slider->isFoc = element.isFoc;
-        sliderDraw(slider);
+    case SLIDER:
+        element.ptr.slider->isFoc = element.isFoc;
+        sliderDraw(element.ptr.slider);
         break;
-    }
+    case TOGGLE:
+        break;
     }
 }
 
@@ -126,14 +126,19 @@ void sliderIncr(struct Slider *slider, int incr) {
 void elementIncr(struct Element element) {
     switch (element.type) {
     case SLIDER:
-        sliderIncr((struct Slider *)element.ptr, 1);
+        sliderIncr(element.ptr.slider, 1);
+        break;
+    case TOGGLE:
+        break;
     }
 }
 
 void elementDecr(struct Element element) {
     switch (element.type) {
     case SLIDER:
-        sliderIncr((struct Slider *)element.ptr, -1);
+        sliderIncr(element.ptr.slider, -1);
+    case TOGGLE:
+        break;
     }
 }
 

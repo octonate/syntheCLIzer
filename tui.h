@@ -91,6 +91,7 @@ enum BoxChar {
 
 enum ElementType {
     SLIDER,
+    TOGGLE,
 };
 
 struct ColorInfo {
@@ -113,8 +114,18 @@ struct Slider {
     struct ColorInfo clrs;
 };
 
+struct Toggle {
+    int x;
+    int y;
+};
+
+union ElementPtr {
+    struct Slider *slider;
+    struct Toggle *toggle;
+};
+
 struct Element {
-    void *ptr;
+    union ElementPtr ptr;
     enum ElementType type;
     bool isFoc;
 };
