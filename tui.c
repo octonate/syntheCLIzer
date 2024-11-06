@@ -14,16 +14,23 @@ const struct ColorInfo defaultSliderClrs = {
     .bgFoc = CLR_BG_BR_K
 };
 
-static void setKeyRepeatRate() {
-    system("xset r rate 25");
-    system("xset -r 43");
-    system("xset -r 30");
-}
-
 static void resetKeyRepeatRate() {
     system("xset r rate 660");
     system("xset r 43");
     system("xset r 30");
+}
+
+static void setKeyRepeatRate(enum ElementType elementType) {
+    switch (elementType) {
+    case SLIDER:
+        system("xset r rate 25");
+        system("xset -r 43");
+        system("xset -r 30");
+        break;
+    case RADIOS:
+        resetKeyRepeatRate();
+        break;
+    }
 }
 
 void tuiInit(struct Tui *tui, int x, int y, int width, int height, char *label) {
@@ -238,11 +245,7 @@ void tuiNextElement(struct Tui *tui) {
 
     tui->elements[tui->focElementIdx].isFoc = true;
 
-    if (tui->elements[tui->focElementIdx].type == SLIDER) {
-        setKeyRepeatRate();
-    } else {
-        resetKeyRepeatRate();
-    }
+    setKeyRepeatRate(tui->elements[tui->focElementIdx].type);
     elementDraw(tui->elements[tui->focElementIdx]);
 }
 
@@ -257,6 +260,7 @@ void tuiPrevElement(struct Tui *tui) {
     }
 
     tui->elements[tui->focElementIdx].isFoc = true;
+    setKeyRepeatRate(tui->elements[tui->focElementIdx].type);
 
     elementDraw(tui->elements[tui->focElementIdx]);
 }
@@ -314,7 +318,6 @@ void hello() {
     printf("%s", CURSOR_HIDE);
 
     system("clear");
-    setKeyRepeatRate();
 }
 
 
