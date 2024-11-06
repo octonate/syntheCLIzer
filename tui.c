@@ -104,7 +104,6 @@ static void sliderDraw(struct Slider *slider) {
     }
     printf("%s%s%s%c", TEXT_BOLD, clrsBG[curLabelBgClr], clrsFG[curLabelFgClr], slider->label);
     SET_CURSOR_POS(slider->x, slider->y);
-    fflush(stdout);
 }
 
 static void sliderIncr(struct Slider *slider, int incr) {
@@ -126,10 +125,11 @@ static void radiosDraw(struct Radios *radios) {
     printf("%s", TEXT_RESET);
 
     for (int i = 0; i < radios->buttonCount; i++) {
+        SET_CURSOR_POS(radios->x, radios->y + i);
         printf("%s", radios->buttonList[i].isSelected ? "* " : "  ");
         printf("%s", radios->buttonList[i].name);
-        SET_CURSOR_POS(radios->x, radios->y + i);
     }
+    SET_CURSOR_POS(radios->x, radios->y + radios->buttonCount);
     printf("%s%s", radios->isFoc ? clrsBG[CLR_BG_BR_K] : clrsBG[CLR_BG_K], radios->label);
 }
 
@@ -187,7 +187,7 @@ void tuiAddSlider(struct Tui *tui, struct Slider *slider, int x, int y, int heig
     slider->clrs.bgFoc = tui->sliderClrs.bgFoc;
     
     slider->divVal = 0;
-    slider->val= 0;
+    slider->val = INT16_MIN;
 
     tui->elements[tui->elementsLen].ptr.slider = slider;
     tui->elements[tui->elementsLen].type = SLIDER;
@@ -207,6 +207,8 @@ void elementDraw(struct Element element) {
         radiosDraw(element.ptr.radios);
         break;
     }
+
+    fflush(stdout);
 }
 
 void elementIncr(struct Element element) {

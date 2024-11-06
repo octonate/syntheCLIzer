@@ -197,7 +197,7 @@ void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *
     *env->gate = false;
     env->t = 0;
     env->prevGate = false;
-    env->releaseSample = 0;
+    //env->releaseSample = 0;
     env->out = INT16_MIN;
 
     synth->envs[synth->envsLen] = env;
