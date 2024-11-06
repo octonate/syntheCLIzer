@@ -186,8 +186,9 @@ void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int heig
     slider->clrs.fgFoc = box->sliderClrs.fgFoc;
     slider->clrs.bgFoc = box->sliderClrs.bgFoc;
     
-    slider->divVal = 0;
-    slider->val = minVal;
+    int maxDivs = height * (barsVertLen - 1);
+    slider->divVal = maxDivs / 2;
+    slider->val = (double) slider->divVal / maxDivs * (maxVal - minVal) + minVal;
 
     box->elements[box->elementsLen].ptr.slider = slider;
     box->elements[box->elementsLen].type = SLIDER;
