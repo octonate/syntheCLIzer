@@ -33,20 +33,6 @@ static void setKeyRepeatRate(enum ElementType elementType) {
     }
 }
 
-void boxInit(struct Box *box, int x, int y, int width, int height, char *label) {
-    box->elementsLen = 0;
-    box->x = x;
-    box->y = y;
-    box->width = width;
-    box->height = height;
-    box->label = label;
-
-    box->sliderClrs.fg = defaultSliderClrs.fg;
-    box->sliderClrs.bg = defaultSliderClrs.bg;
-    box->sliderClrs.fgFoc = defaultSliderClrs.fgFoc;
-    box->sliderClrs.bgFoc = defaultSliderClrs.bgFoc;
-    box->focElementIdx = 0;
-}
 
 static void radiosDraw(struct Radios *radios) {
     SET_CURSOR_POS(radios->x, radios->y);
@@ -305,13 +291,22 @@ static void outlineDraw(int x, int y, int width, int height, enum OutlineStyle s
     SET_CURSOR_POS(x, y);
 }
 
-void boxDraw(struct Box *box) {
-    outlineDraw(box->x, box->y, box->width, box->height, THIN, box->label);
-    //for (int i = 0; i < box->slidersLen; i++) {
-    //    sliderDraw(box->sliders[i]);
-    //}
-}
+void boxInit(struct Box *box, int x, int y, int width, int height, char *label) {
+    box->elementsLen = 0;
+    box->x = x;
+    box->y = y;
+    box->width = width;
+    box->height = height;
+    box->label = label;
 
+    box->sliderClrs.fg = defaultSliderClrs.fg;
+    box->sliderClrs.bg = defaultSliderClrs.bg;
+    box->sliderClrs.fgFoc = defaultSliderClrs.fgFoc;
+    box->sliderClrs.bgFoc = defaultSliderClrs.bgFoc;
+    box->focElementIdx = 0;
+
+    outlineDraw(box->x, box->y, box->width, box->height, THIN, box->label);
+}
 
 static struct termios oldTerm, newTerm;
 void hello() {

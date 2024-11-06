@@ -88,7 +88,6 @@ int main() {
 
 
     while (!quit) {
-        boxDraw(&box);
         curKey = getchar();
         switch (curKey) {
         case '[':

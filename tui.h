@@ -170,7 +170,6 @@ extern const char *outlineChars[STYLE_COUNT][BOX_CHAR_COUNT];
 void boxInit(struct Box *box, int x, int y, int width, int height, char *label);
 void boxNextElement(struct Box *box);
 void boxPrevElement(struct Box *box);
-void boxDraw(struct Box *box);
 void boxSetDefaultSliderClrs(struct Box *box, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
 
 void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label);
