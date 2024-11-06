@@ -5,7 +5,7 @@ const char *barsVert[] = { " ", "\u2581", "\u2582", "\u2583", "\u2584", "\u2585"
 const int barsVertLen = sizeof (barsVert) / sizeof (barsVert[0]);
 const char *barsHor[] = { " ", "\u258F", "\u258E", "\u258D", "\u258C", "\u258B", "\u258A", "\u2589", "\u2588" };
 
-const char *boxChars[STYLE_COUNT][BOX_CHAR_COUNT] = {
+const char *outlineChars[STYLE_COUNT][BOX_CHAR_COUNT] = {
     { "\u2500", "\u2502", "\u250c", "\u2510", "\u2514", "\u2518" }, 
     { "\u2501", "\u2503", "\u250f", "\u2513", "\u2517", "\u251b" }, 
     { "\u2500", "\u2502", "\u256d", "\u256e", "\u2570", "\u256f" }, 

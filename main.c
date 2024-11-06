@@ -20,17 +20,17 @@ int main() {
     system("clear");
     hello();
 
-    struct Tui tui;
-    tuiInit(&tui, 10, 10, 9, 9, "osc1");
+    struct Box box;
+    boxInit(&box, 10, 10, 16, 7, "osc1");
 
     struct Slider sliderA, sliderD, sliderS, sliderR;
-    tuiAddSlider(&tui, &sliderA, 1, 1, 4, 0, 1000, 'a');
-    tuiAddSlider(&tui, &sliderD, 3, 1, 4, 0, 1000, 'd');
-    tuiAddSlider(&tui, &sliderS, 5, 1, 4, INT16_MIN, INT16_MAX, 's');
-    tuiAddSlider(&tui, &sliderR, 7, 1, 4, 0, 2000, 'r');
+    boxAddSlider(&box, &sliderA, 1, 1, 4, 0, 1000, 'a');
+    boxAddSlider(&box, &sliderD, 3, 1, 4, 0, 1000, 'd');
+    boxAddSlider(&box, &sliderS, 5, 1, 4, INT16_MIN, INT16_MAX, 's');
+    boxAddSlider(&box, &sliderR, 7, 1, 4, 0, 2000, 'r');
 
     struct Radios shape;
-    tuiAddRadios(&tui, &shape, 10, 1, "shape");
+    boxAddRadios(&box, &shape, 10, 1, "shape");
     radiosAddButton(&shape, "sin", SINE);
     radiosAddButton(&shape, "sqr", SQUARE);
     radiosAddButton(&shape, "tri", TRI);
@@ -99,23 +99,23 @@ int main() {
             quit = true;
             break;
         case 'k':
-            elementIncr(tui.elements[tui.focElementIdx]);
+            elementIncr(box.elements[box.focElementIdx]);
             break;
         case 'j':
-            elementDecr(tui.elements[tui.focElementIdx]);
+            elementDecr(box.elements[box.focElementIdx]);
             break;
         case 'h':
-            tuiPrevElement(&tui);
+            boxPrevElement(&box);
             break;
         case 'l':
-            tuiNextElement(&tui);
+            boxNextElement(&box);
             break;
         default:
             input1.gate = true;
             input1.val = freqToSample(200 * pow(2, (double) (curKey - 48) / 12));
         }
 
-        tuiDraw(&tui);
+        boxDraw(&box);
 
     }
 

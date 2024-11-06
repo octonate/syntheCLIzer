@@ -74,7 +74,7 @@ enum ColorBG {
     CLR_BG_COUNT
 };
 
-enum BoxStyle {
+enum OutlineStyle {
     THIN,
     THICK,
     ROUND,
@@ -83,7 +83,7 @@ enum BoxStyle {
     STYLE_COUNT
 };
 
-enum BoxChar {
+enum OutlineChar {
     HOR_LINE,
     VERT_LINE,
     UPPER_LEFT_CORNER,
@@ -146,7 +146,7 @@ struct Element {
     bool isFoc;
 };
 
-struct Tui {
+struct Box {
     struct Element elements[LIST_BUF_SIZE];
     struct ColorInfo sliderClrs;
     int focElementIdx;
@@ -164,16 +164,16 @@ extern const char *barsHor[];
 
 extern const char *clrsFG[];
 extern const char *clrsBG[];
-extern const char *boxChars[STYLE_COUNT][BOX_CHAR_COUNT];
+extern const char *outlineChars[STYLE_COUNT][BOX_CHAR_COUNT];
 
-void tuiInit(struct Tui *tui, int x, int y, int width, int height, char *label);
-void tuiNextElement(struct Tui *tui);
-void tuiPrevElement(struct Tui *tui);
-void tuiDraw(struct Tui *tui);
-void tuiSetDefaultSliderClrs(struct Tui *tui, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
+void boxInit(struct Box *box, int x, int y, int width, int height, char *label);
+void boxNextElement(struct Box *box);
+void boxPrevElement(struct Box *box);
+void boxDraw(struct Box *box);
+void boxSetDefaultSliderClrs(struct Box *box, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
 
-void tuiAddSlider(struct Tui *tui, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label);
-void tuiAddRadios(struct Tui *tui, struct Radios *radios, int x, int y, char *label);
+void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label);
+void boxAddRadios(struct Box *box, struct Radios *radios, int x, int y, char *label);
 
 void radiosAddButton(struct Radios *radios, char *name, int val);
 void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);

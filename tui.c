@@ -33,40 +33,40 @@ static void setKeyRepeatRate(enum ElementType elementType) {
     }
 }
 
-void tuiInit(struct Tui *tui, int x, int y, int width, int height, char *label) {
-    tui->elementsLen = 0;
-    tui->x = x;
-    tui->y = y;
-    tui->width = width;
-    tui->height = height;
-    tui->label = label;
+void boxInit(struct Box *box, int x, int y, int width, int height, char *label) {
+    box->elementsLen = 0;
+    box->x = x;
+    box->y = y;
+    box->width = width;
+    box->height = height;
+    box->label = label;
 
-    tui->sliderClrs.fg = defaultSliderClrs.fg;
-    tui->sliderClrs.bg = defaultSliderClrs.bg;
-    tui->sliderClrs.fgFoc = defaultSliderClrs.fgFoc;
-    tui->sliderClrs.bgFoc = defaultSliderClrs.bgFoc;
-    tui->focElementIdx = 0;
+    box->sliderClrs.fg = defaultSliderClrs.fg;
+    box->sliderClrs.bg = defaultSliderClrs.bg;
+    box->sliderClrs.fgFoc = defaultSliderClrs.fgFoc;
+    box->sliderClrs.bgFoc = defaultSliderClrs.bgFoc;
+    box->focElementIdx = 0;
 }
 
-void tuiAddRadios(struct Tui *tui, struct Radios *radios, int x, int y, char *label) {
-    radios->x = tui->x + x;
-    radios->y = tui->y + y;
+void boxAddRadios(struct Box *box, struct Radios *radios, int x, int y, char *label) {
+    radios->x = box->x + x;
+    radios->y = box->y + y;
     radios->label = label;
     radios->buttonCount = 0;
     radios->val = 0;
     radios->isFoc = 0;
     radios->selectedButtonIdx = 0;
     
-    tui->elements[tui->elementsLen].ptr.radios = radios;
-    tui->elements[tui->elementsLen].type = RADIOS;
-    ++tui->elementsLen;
+    box->elements[box->elementsLen].ptr.radios = radios;
+    box->elements[box->elementsLen].type = RADIOS;
+    ++box->elementsLen;
 }
 
-void tuiSetDefaultSliderClrs(struct Tui *tui, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc) {
-    tui->sliderClrs.fg = fg;
-    tui->sliderClrs.bg = bg;
-    tui->sliderClrs.fgFoc = fgFoc;
-    tui->sliderClrs.bgFoc = bgFoc;
+void boxSetDefaultSliderClrs(struct Box *box, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc) {
+    box->sliderClrs.fg = fg;
+    box->sliderClrs.bg = bg;
+    box->sliderClrs.fgFoc = fgFoc;
+    box->sliderClrs.bgFoc = bgFoc;
 }
 
 void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc) {
@@ -173,25 +173,25 @@ void radiosAddButton(struct Radios *radios, char *name, int val) {
     ++radios->buttonCount;
 }
 
-void tuiAddSlider(struct Tui *tui, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label) {
-    slider->x = tui->x + x;
-    slider->y = tui->y + y;
+void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label) {
+    slider->x = box->x + x;
+    slider->y = box->y + y;
     slider->height = height;
     slider->minVal = minVal;
     slider->maxVal = maxVal;
     slider->label = label;
 
-    slider->clrs.fg = tui->sliderClrs.fg;
-    slider->clrs.bg = tui->sliderClrs.bg;
-    slider->clrs.fgFoc = tui->sliderClrs.fgFoc;
-    slider->clrs.bgFoc = tui->sliderClrs.bgFoc;
+    slider->clrs.fg = box->sliderClrs.fg;
+    slider->clrs.bg = box->sliderClrs.bg;
+    slider->clrs.fgFoc = box->sliderClrs.fgFoc;
+    slider->clrs.bgFoc = box->sliderClrs.bgFoc;
     
     slider->divVal = 0;
     slider->val = minVal;
 
-    tui->elements[tui->elementsLen].ptr.slider = slider;
-    tui->elements[tui->elementsLen].type = SLIDER;
-    ++tui->elementsLen;
+    box->elements[box->elementsLen].ptr.slider = slider;
+    box->elements[box->elementsLen].type = SLIDER;
+    ++box->elementsLen;
 
     sliderDraw(slider);
 }
@@ -235,39 +235,39 @@ void elementDecr(struct Element element) {
     elementDraw(element);
 }
 
-void tuiNextElement(struct Tui *tui) {
-    tui->elements[tui->focElementIdx].isFoc = false;
-    elementDraw(tui->elements[tui->focElementIdx]);
+void boxNextElement(struct Box *box) {
+    box->elements[box->focElementIdx].isFoc = false;
+    elementDraw(box->elements[box->focElementIdx]);
 
-    if (tui->focElementIdx == tui->elementsLen - 1) {
-        tui->focElementIdx = 0;
+    if (box->focElementIdx == box->elementsLen - 1) {
+        box->focElementIdx = 0;
     } else {
-        ++tui->focElementIdx;
+        ++box->focElementIdx;
     }
 
-    tui->elements[tui->focElementIdx].isFoc = true;
+    box->elements[box->focElementIdx].isFoc = true;
 
-    setKeyRepeatRate(tui->elements[tui->focElementIdx].type);
-    elementDraw(tui->elements[tui->focElementIdx]);
+    setKeyRepeatRate(box->elements[box->focElementIdx].type);
+    elementDraw(box->elements[box->focElementIdx]);
 }
 
-void tuiPrevElement(struct Tui *tui) {
-    tui->elements[tui->focElementIdx].isFoc = false;
-    elementDraw(tui->elements[tui->focElementIdx]);
+void boxPrevElement(struct Box *box) {
+    box->elements[box->focElementIdx].isFoc = false;
+    elementDraw(box->elements[box->focElementIdx]);
 
-    if (tui->focElementIdx == 0) {
-        tui->focElementIdx = tui->elementsLen - 1;
+    if (box->focElementIdx == 0) {
+        box->focElementIdx = box->elementsLen - 1;
     } else {
-        --tui->focElementIdx;
+        --box->focElementIdx;
     }
 
-    tui->elements[tui->focElementIdx].isFoc = true;
-    setKeyRepeatRate(tui->elements[tui->focElementIdx].type);
+    box->elements[box->focElementIdx].isFoc = true;
+    setKeyRepeatRate(box->elements[box->focElementIdx].type);
 
-    elementDraw(tui->elements[tui->focElementIdx]);
+    elementDraw(box->elements[box->focElementIdx]);
 }
 
-static void boxDraw(int x, int y, int width, int height, enum BoxStyle style, char *label) {
+static void outlineDraw(int x, int y, int width, int height, enum OutlineStyle style, char *label) {
     if (width < 2) return;
     
     int labelLen = strlen(label);
@@ -278,35 +278,35 @@ static void boxDraw(int x, int y, int width, int height, enum BoxStyle style, ch
     SET_CURSOR_POS(x, y);
     printf("%s", TEXT_RESET);
 
-    printf("%s", boxChars[style][UPPER_LEFT_CORNER]);
+    printf("%s", outlineChars[style][UPPER_LEFT_CORNER]);
     printf("%.*s", labelLen, label);
     for (int i = 0; i < width - labelLen - 2; i++) {
-        printf("%s", boxChars[style][HOR_LINE]);
+        printf("%s", outlineChars[style][HOR_LINE]);
     }
-    printf("%s\b", boxChars[style][UPPER_RIGHT_CORNER]);
+    printf("%s\b", outlineChars[style][UPPER_RIGHT_CORNER]);
 
     SET_CURSOR_POS(x, y + 1);
 
     for (int i = 0; i < height - 2; i++) {
-        printf("%s", boxChars[style][VERT_LINE]);
+        printf("%s", outlineChars[style][VERT_LINE]);
         MOVE_CURSOR_RIGHT(width - 2);
-        printf("%s", boxChars[style][VERT_LINE]);
+        printf("%s", outlineChars[style][VERT_LINE]);
         MOVE_CURSOR_LEFT(width);
         printf("%s", CURSOR_DOWN);
     }
-    printf("%s", boxChars[style][LOWER_LEFT_CORNER]);
+    printf("%s", outlineChars[style][LOWER_LEFT_CORNER]);
     for (int i = 0; i < width - 2; i++) {
-        printf("%s", boxChars[style][HOR_LINE]);
+        printf("%s", outlineChars[style][HOR_LINE]);
     }
-    printf("%s\b", boxChars[style][LOWER_RIGHT_CORNER]);
+    printf("%s\b", outlineChars[style][LOWER_RIGHT_CORNER]);
 
     SET_CURSOR_POS(x, y);
 }
 
-void tuiDraw(struct Tui *tui) {
-    boxDraw(tui->x, tui->y, tui->width, tui->height, THIN, tui->label);
-    //for (int i = 0; i < tui->slidersLen; i++) {
-    //    sliderDraw(tui->sliders[i]);
+void boxDraw(struct Box *box) {
+    outlineDraw(box->x, box->y, box->width, box->height, THIN, box->label);
+    //for (int i = 0; i < box->slidersLen; i++) {
+    //    sliderDraw(box->sliders[i]);
     //}
 }
 
