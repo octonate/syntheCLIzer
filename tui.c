@@ -187,7 +187,7 @@ void tuiAddSlider(struct Tui *tui, struct Slider *slider, int x, int y, int heig
     slider->clrs.bgFoc = tui->sliderClrs.bgFoc;
     
     slider->divVal = 0;
-    slider->val = INT16_MIN;
+    slider->val = minVal;
 
     tui->elements[tui->elementsLen].ptr.slider = slider;
     tui->elements[tui->elementsLen].type = SLIDER;
