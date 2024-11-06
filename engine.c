@@ -81,7 +81,7 @@ void oscRun(struct Oscillator *osc) {
     if (osc->t > period) {
         osc->t = 0;
     }
-    switch (osc->waveform) {
+    switch (*osc->waveform) {
     case SINE:
         sample = oscSine(freq, osc->t);
         break;
@@ -99,7 +99,7 @@ void oscRun(struct Oscillator *osc) {
     osc->out = sample;
 }
 
-void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, enum Waveform waveform) {
+void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, enum Waveform *waveform) {
     osc->freqSample = freqIn;
     osc->waveform = waveform;
     osc->t = 0;

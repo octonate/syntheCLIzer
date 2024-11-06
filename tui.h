@@ -2,6 +2,7 @@
 #define TUI_H
 
 #include "common.h"
+#include "engine.h"
 
 #define KEYCODE_H 43
 #define KEYCODE_L 30
@@ -131,7 +132,7 @@ struct Radios {
     int selectedButtonIdx;
     int x;
     int y;
-    int val;
+    enum Waveform val;
     bool isFoc;
 };
 

@@ -26,7 +26,7 @@ struct NoteInput {
 
 struct Oscillator {
     int16_t *freqSample;
-    enum Waveform waveform;
+    enum Waveform *waveform;
 
     uint16_t t;
     int16_t out;
@@ -81,7 +81,7 @@ void synthInit(struct Synth *synth);
 void synthRun(struct Synth *synth);
 
 void synthAddmixer(struct Synth *synth, struct Mixer *mixer, int16_t *samplesIn[]);
-void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, enum Waveform waveform);
+void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, enum Waveform *waveform);
 void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, double gain);
 void synthAddAttr(struct Synth *synth, struct Attenuator *attr, int16_t *sampleIn, int16_t *gainSample);
 void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *attackPtr, double *decayPtr, double *sustainPtr, double *releasePtr);

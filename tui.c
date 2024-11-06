@@ -136,6 +136,7 @@ static void radiosNextButton(struct Radios *radios) {
     }
 
     radios->buttonList[radios->selectedButtonIdx].isSelected = true;
+    radios->val = radios->buttonList[radios->selectedButtonIdx].val;
 }
 
 static void radiosPrevButton(struct Radios *radios) {
@@ -148,6 +149,7 @@ static void radiosPrevButton(struct Radios *radios) {
     }
 
     radios->buttonList[radios->selectedButtonIdx].isSelected = true;
+    radios->val = radios->buttonList[radios->selectedButtonIdx].val;
 }
 
 
@@ -245,8 +247,8 @@ void tuiNextElement(struct Tui *tui) {
 }
 
 void tuiPrevElement(struct Tui *tui) {
-    elementDraw(tui->elements[tui->focElementIdx]);
     tui->elements[tui->focElementIdx].isFoc = false;
+    elementDraw(tui->elements[tui->focElementIdx]);
 
     if (tui->focElementIdx == 0) {
         tui->focElementIdx = tui->elementsLen - 1;

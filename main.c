@@ -21,7 +21,7 @@ int main() {
     hello();
 
     struct Tui tui;
-    tuiInit(&tui, 10, 10, 9, 9, "12345678");
+    tuiInit(&tui, 10, 10, 9, 9, "osc1");
 
     struct Slider sliderA, sliderD, sliderS, sliderR;
     tuiAddSlider(&tui, &sliderA, 1, 1, 4, 0, 1000, 'a');
@@ -49,11 +49,10 @@ int main() {
     synthAddAmp(&synth, &octaveUp, &input1.val, 2);
     synthAddAmp(&synth, &octaveDown, &input1.val, 0.5);
 
-
     struct Oscillator osc1, osc2, osc3;
-    synthAddOsc(&synth, &osc1, &octaveDown.out, TRI);
-    synthAddOsc(&synth, &osc2, &octaveUp.out, SINE);
-    synthAddOsc(&synth, &osc3, &input1.val, SQUARE);
+    synthAddOsc(&synth, &osc1, &octaveDown.out, &(enum Waveform){SAW});
+    synthAddOsc(&synth, &osc2, &octaveUp.out, &(enum Waveform){SINE});
+    synthAddOsc(&synth, &osc3, &input1.val, &shape.val);
 
 
     struct Mixer mixer;
