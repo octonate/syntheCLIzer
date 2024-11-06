@@ -184,7 +184,7 @@ void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int heig
     sliderDraw(slider);
 }
 
-void elementDraw(struct Element element) {
+static void elementDraw(struct Element element) {
     switch (element.type) {
     case SLIDER:
         element.ptr.slider->isFoc = element.isFoc;

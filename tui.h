@@ -178,7 +178,6 @@ void boxAddRadios(struct Box *box, struct Radios *radios, int x, int y, char *la
 void radiosAddButton(struct Radios *radios, char *name, int val);
 void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
 
-void elementDraw(struct Element element);
 void elementIncr(struct Element element);
 void elementDecr(struct Element element);
 
