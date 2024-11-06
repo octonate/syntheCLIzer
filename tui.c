@@ -43,7 +43,7 @@ void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum 
     slider->clrs.bgFoc = bgFoc;
 }
 
-void sliderDraw(struct Slider *slider) {
+static void sliderDraw(struct Slider *slider) {
     if (slider == NULL) return;
 
     enum ColorFG curFgClr = slider->isFoc ? slider->clrs.fgFoc: slider->clrs.fg;
@@ -72,6 +72,21 @@ void sliderDraw(struct Slider *slider) {
     printf("%s%s%s%c", TEXT_BOLD, clrsBG[curLabelBgClr], clrsFG[curLabelFgClr], slider->label);
     SET_CURSOR_POS(slider->x, slider->y);
     fflush(stdout);
+}
+
+static void sliderIncr(struct Slider *slider, int incr) {
+    if (slider == NULL) return;
+
+    int maxDivs = slider->height * (barsVertLen - 1);
+    if (incr < 0 && slider->divVal < abs(incr)) {
+        slider->divVal = 0;
+    } else if (incr > 0 && maxDivs - slider->divVal < incr) {
+        slider->divVal = maxDivs;
+    } else {
+        slider->divVal += incr;
+    }
+    slider->val = (double) slider->divVal / maxDivs * (slider->maxVal - slider->minVal) + slider->minVal;
+    sliderDraw(slider);
 }
 
 void tuiAddSlider(struct Tui *tui, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label) {
@@ -103,32 +118,18 @@ void elementDraw(struct Element element) {
         element.ptr.slider->isFoc = element.isFoc;
         sliderDraw(element.ptr.slider);
         break;
-    case TOGGLE:
+    case RADIOS:
         break;
     }
 }
 
-void sliderIncr(struct Slider *slider, int incr) {
-    if (slider == NULL) return;
-
-    int maxDivs = slider->height * (barsVertLen - 1);
-    if (incr < 0 && slider->divVal < abs(incr)) {
-        slider->divVal = 0;
-    } else if (incr > 0 && maxDivs - slider->divVal < incr) {
-        slider->divVal = maxDivs;
-    } else {
-        slider->divVal += incr;
-    }
-    slider->val = (double) slider->divVal / maxDivs * (slider->maxVal - slider->minVal) + slider->minVal;
-    sliderDraw(slider);
-}
 
 void elementIncr(struct Element element) {
     switch (element.type) {
     case SLIDER:
         sliderIncr(element.ptr.slider, 1);
         break;
-    case TOGGLE:
+    case RADIOS:
         break;
     }
 }
@@ -137,7 +138,7 @@ void elementDecr(struct Element element) {
     switch (element.type) {
     case SLIDER:
         sliderIncr(element.ptr.slider, -1);
-    case TOGGLE:
+    case RADIOS:
         break;
     }
 }
@@ -214,7 +215,6 @@ void tuiDraw(struct Tui *tui) {
     //    sliderDraw(tui->sliders[i]);
     //}
 }
-
 
 static struct termios oldTerm, newTerm;
 void hello() {

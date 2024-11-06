@@ -65,3 +65,9 @@ const char *clrsBG[] = {
     "\033[106m",
     "\033[107m",
 };
+
+const char *waveformIcons[] = {
+    "\u223f",
+    "\u2440",
+    
+};
