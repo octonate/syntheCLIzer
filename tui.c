@@ -48,13 +48,26 @@ void boxInit(struct Box *box, int x, int y, int width, int height, char *label) 
     box->focElementIdx = 0;
 }
 
+static void radiosDraw(struct Radios *radios) {
+    SET_CURSOR_POS(radios->x, radios->y);
+    printf("%s", TEXT_RESET);
+
+    for (int i = 0; i < radios->buttonCount; i++) {
+        SET_CURSOR_POS(radios->x, radios->y + i);
+        printf("%s", radios->buttonList[i].isSelected ? "* " : "  ");
+        printf("%s", radios->buttonList[i].name);
+    }
+    SET_CURSOR_POS(radios->x, radios->y + radios->buttonCount);
+    printf("%s%s", radios->isFoc ? clrsBG[CLR_BG_BR_K] : clrsBG[CLR_BG_K], radios->label);
+}
+
+
 void boxAddRadios(struct Box *box, struct Radios *radios, int x, int y, char *label) {
     radios->x = box->x + x;
     radios->y = box->y + y;
     radios->label = label;
     radios->buttonCount = 0;
     radios->val = 0;
-    radios->isFoc = 0;
     radios->selectedButtonIdx = 0;
     
     box->elements[box->elementsLen].ptr.radios = radios;
@@ -120,19 +133,6 @@ static void sliderIncr(struct Slider *slider, int incr) {
     slider->val = (double) slider->divVal / maxDivs * (slider->maxVal - slider->minVal) + slider->minVal;
 }
 
-static void radiosDraw(struct Radios *radios) {
-    SET_CURSOR_POS(radios->x, radios->y);
-    printf("%s", TEXT_RESET);
-
-    for (int i = 0; i < radios->buttonCount; i++) {
-        SET_CURSOR_POS(radios->x, radios->y + i);
-        printf("%s", radios->buttonList[i].isSelected ? "* " : "  ");
-        printf("%s", radios->buttonList[i].name);
-    }
-    SET_CURSOR_POS(radios->x, radios->y + radios->buttonCount);
-    printf("%s%s", radios->isFoc ? clrsBG[CLR_BG_BR_K] : clrsBG[CLR_BG_K], radios->label);
-}
-
 static void radiosSelectButtonDown(struct Radios *radios) {
     radios->buttonList[radios->selectedButtonIdx].isSelected = false;
 
@@ -171,6 +171,7 @@ void radiosAddButton(struct Radios *radios, char *name, int val) {
     }
 
     ++radios->buttonCount;
+   radiosDraw(radios); 
 }
 
 void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label) {

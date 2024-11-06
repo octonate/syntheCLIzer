@@ -86,7 +86,9 @@ int main() {
     audioDevice = SDL_OpenAudioDevice(NULL, 0, &audioSpec, NULL, 0);
     SDL_PauseAudioDevice(audioDevice, 0);
 
+
     while (!quit) {
+        boxDraw(&box);
         curKey = getchar();
         switch (curKey) {
         case '[':
@@ -114,9 +116,6 @@ int main() {
             input1.gate = true;
             input1.val = freqToSample(200 * pow(2, (double) (curKey - 48) / 12));
         }
-
-        boxDraw(&box);
-
     }
 
     SDL_Delay(50);
