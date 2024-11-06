@@ -132,7 +132,7 @@ struct Radios {
     int selectedButtonIdx;
     int x;
     int y;
-    enum Waveform val;
+    int val;
     bool isFoc;
 };
 

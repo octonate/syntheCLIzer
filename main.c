@@ -52,7 +52,7 @@ int main() {
     struct Oscillator osc1, osc2, osc3;
     synthAddOsc(&synth, &osc1, &octaveDown.out, &(enum Waveform){SAW});
     synthAddOsc(&synth, &osc2, &octaveUp.out, &(enum Waveform){SINE});
-    synthAddOsc(&synth, &osc3, &input1.val, &shape.val);
+    synthAddOsc(&synth, &osc3, &input1.val, (enum Waveform *)&shape.val);
 
 
     struct Mixer mixer;
