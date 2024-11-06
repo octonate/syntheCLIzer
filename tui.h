@@ -18,6 +18,8 @@
 #define MOVE_CURSOR_RIGHT(x) printf("\033[%dC", x)
 #define MOVE_CURSOR_LEFT(x) printf("\033[%dD", x)
 
+#define MAX_RADIO_BUTTONS 8
+
 enum ColorFG {
     CLR_K,
     CLR_R,
@@ -119,11 +121,18 @@ struct Slider {
 struct RadioButton {
     char *name;
     int val;
+    bool isSelected;
 };
+
 struct Radios {
-    struct RadioButton **radios;
+    struct RadioButton buttonList[MAX_RADIO_BUTTONS];
+    char *label;
+    int buttonCount;
+    int selectedButtonIdx;
     int x;
     int y;
+    int val;
+    bool isFoc;
 };
 
 struct Element {
@@ -157,15 +166,17 @@ extern const char *clrsBG[];
 extern const char *boxChars[STYLE_COUNT][BOX_CHAR_COUNT];
 
 void tuiInit(struct Tui *tui, int x, int y, int width, int height, char *label);
-void tuiSetDefaultSliderClrs(struct Tui *tui, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
 void tuiNextElement(struct Tui *tui);
 void tuiPrevElement(struct Tui *tui);
 void tuiDraw(struct Tui *tui);
+void tuiSetDefaultSliderClrs(struct Tui *tui, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
 
 void tuiAddSlider(struct Tui *tui, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label);
-void tuiAddRadios(struct Tui *tui, struct Radios *radios, int x, int y);
+void tuiAddRadios(struct Tui *tui, struct Radios *radios, int x, int y, char *label);
 
+void radiosAddButton(struct Radios *radios, char *name, int val);
 void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
+
 void elementDraw(struct Element element);
 void elementIncr(struct Element element);
 void elementDecr(struct Element element);

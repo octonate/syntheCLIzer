@@ -14,6 +14,18 @@ const struct ColorInfo defaultSliderClrs = {
     .bgFoc = CLR_BG_BR_K
 };
 
+static void setKeyRepeatRate() {
+    system("xset r rate 25");
+    system("xset -r 43");
+    system("xset -r 30");
+}
+
+static void resetKeyRepeatRate() {
+    system("xset r rate 660");
+    system("xset r 43");
+    system("xset r 30");
+}
+
 void tuiInit(struct Tui *tui, int x, int y, int width, int height, char *label) {
     tui->elementsLen = 0;
     tui->x = x;
@@ -27,6 +39,20 @@ void tuiInit(struct Tui *tui, int x, int y, int width, int height, char *label) 
     tui->sliderClrs.fgFoc = defaultSliderClrs.fgFoc;
     tui->sliderClrs.bgFoc = defaultSliderClrs.bgFoc;
     tui->focElementIdx = 0;
+}
+
+void tuiAddRadios(struct Tui *tui, struct Radios *radios, int x, int y, char *label) {
+    radios->x = tui->x + x;
+    radios->y = tui->y + y;
+    radios->label = label;
+    radios->buttonCount = 0;
+    radios->val = 0;
+    radios->isFoc = 0;
+    radios->selectedButtonIdx = 0;
+    
+    tui->elements[tui->elementsLen].ptr.radios = radios;
+    tui->elements[tui->elementsLen].type = RADIOS;
+    ++tui->elementsLen;
 }
 
 void tuiSetDefaultSliderClrs(struct Tui *tui, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc) {
@@ -86,7 +112,56 @@ static void sliderIncr(struct Slider *slider, int incr) {
         slider->divVal += incr;
     }
     slider->val = (double) slider->divVal / maxDivs * (slider->maxVal - slider->minVal) + slider->minVal;
-    sliderDraw(slider);
+}
+
+static void radiosDraw(struct Radios *radios) {
+    SET_CURSOR_POS(radios->x, radios->y);
+    printf("%s", TEXT_RESET);
+
+    for (int i = 0; i < radios->buttonCount; i++) {
+        printf("%s", radios->buttonList[i].isSelected ? "* " : "  ");
+        printf("%s", radios->buttonList[i].name);
+        SET_CURSOR_POS(radios->x, radios->y + i);
+    }
+    printf("%s%s", radios->isFoc ? clrsBG[CLR_BG_BR_K] : clrsBG[CLR_BG_K], radios->label);
+}
+
+static void radiosNextButton(struct Radios *radios) {
+    radios->buttonList[radios->selectedButtonIdx].isSelected = false;
+
+    if (radios->selectedButtonIdx == radios->buttonCount - 1) {
+        radios->selectedButtonIdx = 0;
+    } else {
+        ++radios->selectedButtonIdx;
+    }
+
+    radios->buttonList[radios->selectedButtonIdx].isSelected = true;
+}
+
+static void radiosPrevButton(struct Radios *radios) {
+    radios->buttonList[radios->selectedButtonIdx].isSelected = false;
+
+    if (radios->selectedButtonIdx == 0) {
+        radios->selectedButtonIdx = radios->buttonCount - 1;
+    } else {
+        --radios->selectedButtonIdx;
+    }
+
+    radios->buttonList[radios->selectedButtonIdx].isSelected = true;
+}
+
+
+void radiosAddButton(struct Radios *radios, char *name, int val) {
+    radios->buttonList[radios->buttonCount].name = name;
+    radios->buttonList[radios->buttonCount].val = val;
+
+    if (radios->buttonCount == 0) {
+        radios->buttonList[radios->buttonCount].isSelected = true;
+    } else {
+        radios->buttonList[radios->buttonCount].isSelected = false;
+    }
+
+    ++radios->buttonCount;
 }
 
 void tuiAddSlider(struct Tui *tui, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label) {
@@ -119,10 +194,11 @@ void elementDraw(struct Element element) {
         sliderDraw(element.ptr.slider);
         break;
     case RADIOS:
+        element.ptr.radios->isFoc = element.isFoc;
+        radiosDraw(element.ptr.radios);
         break;
     }
 }
-
 
 void elementIncr(struct Element element) {
     switch (element.type) {
@@ -130,17 +206,22 @@ void elementIncr(struct Element element) {
         sliderIncr(element.ptr.slider, 1);
         break;
     case RADIOS:
+        radiosNextButton(element.ptr.radios);
         break;
     }
+    elementDraw(element);
 }
 
 void elementDecr(struct Element element) {
     switch (element.type) {
     case SLIDER:
         sliderIncr(element.ptr.slider, -1);
+        break;
     case RADIOS:
+        radiosPrevButton(element.ptr.radios);
         break;
     }
+    elementDraw(element);
 }
 
 void tuiNextElement(struct Tui *tui) {
@@ -155,6 +236,11 @@ void tuiNextElement(struct Tui *tui) {
 
     tui->elements[tui->focElementIdx].isFoc = true;
 
+    if (tui->elements[tui->focElementIdx].type == SLIDER) {
+        setKeyRepeatRate();
+    } else {
+        resetKeyRepeatRate();
+    }
     elementDraw(tui->elements[tui->focElementIdx]);
 }
 
@@ -173,7 +259,7 @@ void tuiPrevElement(struct Tui *tui) {
     elementDraw(tui->elements[tui->focElementIdx]);
 }
 
-void boxDraw(int x, int y, int width, int height, enum BoxStyle style, char *label) {
+static void boxDraw(int x, int y, int width, int height, enum BoxStyle style, char *label) {
     if (width < 2) return;
     
     int labelLen = strlen(label);
@@ -216,6 +302,7 @@ void tuiDraw(struct Tui *tui) {
     //}
 }
 
+
 static struct termios oldTerm, newTerm;
 void hello() {
     tcgetattr(STDIN_FILENO, &oldTerm);
@@ -225,16 +312,13 @@ void hello() {
     printf("%s", CURSOR_HIDE);
 
     system("clear");
-    system("xset r rate 25");
-    system("xset -r 43");
-    system("xset -r 30");
+    setKeyRepeatRate();
 }
+
 
 void resetTerm() {
     tcsetattr(STDIN_FILENO, TCSANOW, &oldTerm);
     printf("%s%s", CURSOR_SHOW, TEXT_RESET);
-    system("xset r rate 660");
-    system("xset r 43");
-    system("xset r 30");
+    resetKeyRepeatRate();
 }
 

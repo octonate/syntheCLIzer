@@ -29,6 +29,13 @@ int main() {
     tuiAddSlider(&tui, &sliderS, 5, 1, 4, INT16_MIN, INT16_MAX, 's');
     tuiAddSlider(&tui, &sliderR, 7, 1, 4, 0, 2000, 'r');
 
+    struct Radios shape;
+    tuiAddRadios(&tui, &shape, 10, 1, "shape");
+    radiosAddButton(&shape, "sin", SINE);
+    radiosAddButton(&shape, "sqr", SQUARE);
+    radiosAddButton(&shape, "tri", TRI);
+    radiosAddButton(&shape, "saw", SAW);
+
 
     struct Synth synth;
     synthInit(&synth);
