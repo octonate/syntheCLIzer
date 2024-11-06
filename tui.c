@@ -133,7 +133,7 @@ static void radiosDraw(struct Radios *radios) {
     printf("%s%s", radios->isFoc ? clrsBG[CLR_BG_BR_K] : clrsBG[CLR_BG_K], radios->label);
 }
 
-static void radiosNextButton(struct Radios *radios) {
+static void radiosSelectButtonDown(struct Radios *radios) {
     radios->buttonList[radios->selectedButtonIdx].isSelected = false;
 
     if (radios->selectedButtonIdx == radios->buttonCount - 1) {
@@ -146,7 +146,7 @@ static void radiosNextButton(struct Radios *radios) {
     radios->val = radios->buttonList[radios->selectedButtonIdx].val;
 }
 
-static void radiosPrevButton(struct Radios *radios) {
+static void radiosSelectButtonUp(struct Radios *radios) {
     radios->buttonList[radios->selectedButtonIdx].isSelected = false;
 
     if (radios->selectedButtonIdx == 0) {
@@ -217,7 +217,7 @@ void elementIncr(struct Element element) {
         sliderIncr(element.ptr.slider, 1);
         break;
     case RADIOS:
-        radiosNextButton(element.ptr.radios);
+        radiosSelectButtonUp(element.ptr.radios);
         break;
     }
     elementDraw(element);
@@ -229,7 +229,7 @@ void elementDecr(struct Element element) {
         sliderIncr(element.ptr.slider, -1);
         break;
     case RADIOS:
-        radiosPrevButton(element.ptr.radios);
+        radiosSelectButtonDown(element.ptr.radios);
         break;
     }
     elementDraw(element);
