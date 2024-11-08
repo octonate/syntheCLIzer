@@ -20,8 +20,12 @@ int main() {
     system("clear");
     hello();
 
-    struct Box box;
-    boxInit(&box, 10, 10, 16, 7, "osc1");
+    struct Tui tui;
+    tuiInit(&tui, "3xOsc");
+
+    struct Box box, box2;
+    tuiAddBox(&tui, &box, 10, 10, 16, 7, "osc1", THIN);
+    tuiAddBox(&tui, &box2, 30, 10, 16, 7, "osc2", THIN);
 
     struct Slider sliderA, sliderD, sliderS, sliderR;
     boxAddSlider(&box, &sliderA, 1, 1, 4, 0, 1000, 'a');
@@ -89,6 +93,7 @@ int main() {
 
     while (!quit) {
         curKey = getchar();
+        struct Box *focBox = tui.boxes[tui.focBoxIdx];
         switch (curKey) {
         case '[':
             input1.gate = true;
@@ -100,16 +105,23 @@ int main() {
             quit = true;
             break;
         case 'k':
-            elementIncr(box.elements[box.focElementIdx]);
+            elementIncr(tui.boxes[tui.focBoxIdx]->elements[focBox->focElementIdx]);
             break;
         case 'j':
-            elementDecr(box.elements[box.focElementIdx]);
+            elementDecr(tui.boxes[tui.focBoxIdx]->elements[focBox->focElementIdx]);
+            //elementDecr(focBox->elements[focBox->focElementIdx]);
             break;
         case 'h':
-            boxPrevElement(&box);
+            boxPrevElement(focBox);
             break;
         case 'l':
-            boxNextElement(&box);
+            boxNextElement(focBox);
+            break;
+        case 'H':
+            tuiPrevBox(&tui);
+            break;
+        case 'L':
+            tuiNextBox(&tui);
             break;
         default:
             input1.gate = true;
