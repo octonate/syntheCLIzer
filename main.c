@@ -105,11 +105,11 @@ int main() {
             quit = true;
             break;
         case 'k':
-            elementIncr(tui.boxes[tui.focBoxIdx]->elements[focBox->focElementIdx]);
+            elementIncr(focBox->elements[focBox->focElementIdx]);
             break;
         case 'j':
-            elementDecr(tui.boxes[tui.focBoxIdx]->elements[focBox->focElementIdx]);
-            //elementDecr(focBox->elements[focBox->focElementIdx]);
+            //elementDecr(tui.boxes[tui.focBoxIdx]->elements[focBox->focElementIdx]);
+            elementDecr(focBox->elements[focBox->focElementIdx]);
             break;
         case 'h':
             boxPrevElement(focBox);

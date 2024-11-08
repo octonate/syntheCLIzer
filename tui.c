@@ -224,6 +224,8 @@ void elementDecr(struct Element element) {
 }
 
 void boxNextElement(struct Box *box) {
+    if (box->elementsLen == 0) return;
+
     box->elements[box->focElementIdx].isFoc = false;
     elementDraw(box->elements[box->focElementIdx]);
 
@@ -240,6 +242,8 @@ void boxNextElement(struct Box *box) {
 }
 
 void boxPrevElement(struct Box *box) {
+    if (box->elementsLen == 0) return;
+
     box->elements[box->focElementIdx].isFoc = false;
     elementDraw(box->elements[box->focElementIdx]);
 
@@ -290,6 +294,8 @@ static void boxDrawOutline(struct Box *box) {
     printf("%s\b", outlineChars[box->style][LOWER_RIGHT_CORNER]);
 
     SET_CURSOR_POS(box->x, box->y);
+
+    fflush(stdout);
 }
 
 void tuiInit(struct Tui *tui, char *label) {
