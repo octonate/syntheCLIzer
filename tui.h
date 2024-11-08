@@ -150,13 +150,22 @@ struct Element {
 struct Box {
     struct Element elements[LIST_BUF_SIZE];
     struct ColorInfo sliderClrs;
+    enum OutlineStyle style;
+    char *label;
     int focElementIdx;
     int elementsLen;
     int x;
     int y;
     int width;
     int height;
+    bool isFoc;
+};
+
+struct Tui {
+    struct Box *boxes[LIST_BUF_SIZE];
     char *label;
+    int focBoxIdx;
+    int boxesLen;
 };
 
 extern const char *barsVert[];
@@ -167,7 +176,11 @@ extern const char *clrsFG[];
 extern const char *clrsBG[];
 extern const char *outlineChars[STYLE_COUNT][BOX_CHAR_COUNT];
 
-void boxInit(struct Box *box, int x, int y, int width, int height, char *label);
+void tuiInit(struct Tui *tui, char *label);
+void tuiNextBox(struct Tui *tui);
+void tuiPrevBox(struct Tui *tui);
+void tuiAddBox(struct Tui *tui, struct Box *box, int x, int y, int width, int height, char *label, enum OutlineStyle style);
+
 void boxNextElement(struct Box *box);
 void boxPrevElement(struct Box *box);
 void boxSetDefaultSliderClrs(struct Box *box, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);

@@ -250,54 +250,90 @@ void boxPrevElement(struct Box *box) {
     }
 
     box->elements[box->focElementIdx].isFoc = true;
-    setKeyRepeatRate(box->elements[box->focElementIdx].type);
 
+    setKeyRepeatRate(box->elements[box->focElementIdx].type);
     elementDraw(box->elements[box->focElementIdx]);
 }
 
-static void outlineDraw(int x, int y, int width, int height, enum OutlineStyle style, char *label) {
-    if (width < 2) return;
+static void boxDrawOutline(struct Box *box) {
+    if (box->width < 2) return;
     
-    int labelLen = strlen(label);
-    if (labelLen > width - 2) {
-        labelLen = width - 2;
+    int labelLen = strlen(box->label);
+    if (labelLen > box->width - 2) {
+        labelLen = box->width - 2;
     }
 
-    SET_CURSOR_POS(x, y);
+    SET_CURSOR_POS(box->x, box->y);
     printf("%s", TEXT_RESET);
+    printf("%s", box->isFoc ? clrsFG[CLR_BR_W] : clrsFG[CLR_BR_K]);
 
-    printf("%s", outlineChars[style][UPPER_LEFT_CORNER]);
-    printf("%.*s", labelLen, label);
-    for (int i = 0; i < width - labelLen - 2; i++) {
-        printf("%s", outlineChars[style][HOR_LINE]);
+    printf("%s", outlineChars[box->style][UPPER_LEFT_CORNER]);
+    printf("%.*s", labelLen, box->label);
+    for (int i = 0; i < box->width - labelLen - 2; i++) {
+        printf("%s", outlineChars[box->style][HOR_LINE]);
     }
-    printf("%s\b", outlineChars[style][UPPER_RIGHT_CORNER]);
+    printf("%s\b", outlineChars[box->style][UPPER_RIGHT_CORNER]);
 
-    SET_CURSOR_POS(x, y + 1);
+    SET_CURSOR_POS(box->x, box->y + 1);
 
-    for (int i = 0; i < height - 2; i++) {
-        printf("%s", outlineChars[style][VERT_LINE]);
-        MOVE_CURSOR_RIGHT(width - 2);
-        printf("%s", outlineChars[style][VERT_LINE]);
-        MOVE_CURSOR_LEFT(width);
+    for (int i = 0; i < box->height - 2; i++) {
+        printf("%s", outlineChars[box->style][VERT_LINE]);
+        MOVE_CURSOR_RIGHT(box->width - 2);
+        printf("%s", outlineChars[box->style][VERT_LINE]);
+        MOVE_CURSOR_LEFT(box->width);
         printf("%s", CURSOR_DOWN);
     }
-    printf("%s", outlineChars[style][LOWER_LEFT_CORNER]);
-    for (int i = 0; i < width - 2; i++) {
-        printf("%s", outlineChars[style][HOR_LINE]);
+    printf("%s", outlineChars[box->style][LOWER_LEFT_CORNER]);
+    for (int i = 0; i < box->width - 2; i++) {
+        printf("%s", outlineChars[box->style][HOR_LINE]);
     }
-    printf("%s\b", outlineChars[style][LOWER_RIGHT_CORNER]);
+    printf("%s\b", outlineChars[box->style][LOWER_RIGHT_CORNER]);
 
-    SET_CURSOR_POS(x, y);
+    SET_CURSOR_POS(box->x, box->y);
 }
 
-void boxInit(struct Box *box, int x, int y, int width, int height, char *label) {
+void tuiInit(struct Tui *tui, char *label) {
+    tui->label = label;
+    tui->boxesLen = 0;
+    tui->focBoxIdx = 0;
+}
+
+void tuiNextBox(struct Tui *tui) {
+    tui->boxes[tui->focBoxIdx]->isFoc = false;
+    boxDrawOutline(tui->boxes[tui->focBoxIdx]);
+
+    if (tui->focBoxIdx == tui->boxesLen - 1) {
+        tui->focBoxIdx = 0;
+    } else {
+        ++tui->focBoxIdx;
+    }
+
+    tui->boxes[tui->focBoxIdx]->isFoc = true;
+    boxDrawOutline(tui->boxes[tui->focBoxIdx]);
+}
+
+void tuiPrevBox(struct Tui *tui) {
+    tui->boxes[tui->focBoxIdx]->isFoc = false;
+    boxDrawOutline(tui->boxes[tui->focBoxIdx]);
+
+    if (tui->focBoxIdx == 0) {
+        tui->focBoxIdx = tui->boxesLen - 1;
+    } else {
+        --tui->focBoxIdx;
+    }
+
+    tui->boxes[tui->focBoxIdx]->isFoc = true;
+    boxDrawOutline(tui->boxes[tui->focBoxIdx]);
+}
+
+void tuiAddBox(struct Tui *tui, struct Box *box, int x, int y, int width, int height, char *label, enum OutlineStyle style) {
     box->elementsLen = 0;
     box->x = x;
     box->y = y;
     box->width = width;
     box->height = height;
     box->label = label;
+    box->style = style;
 
     box->sliderClrs.fg = defaultSliderClrs.fg;
     box->sliderClrs.bg = defaultSliderClrs.bg;
@@ -305,7 +341,10 @@ void boxInit(struct Box *box, int x, int y, int width, int height, char *label) 
     box->sliderClrs.bgFoc = defaultSliderClrs.bgFoc;
     box->focElementIdx = 0;
 
-    outlineDraw(box->x, box->y, box->width, box->height, THIN, box->label);
+    boxDrawOutline(box);
+
+    tui->boxes[tui->boxesLen] = box;
+    ++tui->boxesLen;
 }
 
 static struct termios oldTerm, newTerm;
