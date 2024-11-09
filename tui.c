@@ -55,6 +55,8 @@ void boxAddRadios(struct Box *box, struct Radios *radios, int x, int y, char *la
     radios->buttonCount = 0;
     radios->val = 0;
     radios->selectedButtonIdx = 0;
+
+    radios->isFoc = box->elementsLen == 0 ? true : false;
     
     box->elements[box->elementsLen].ptr.radios = radios;
     box->elements[box->elementsLen].type = RADIOS;
@@ -76,8 +78,6 @@ void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum 
 }
 
 static void sliderDraw(struct Slider *slider) {
-    if (slider == NULL) return;
-
     enum ColorFG curFgClr = slider->isFoc ? slider->clrs.fgFoc: slider->clrs.fg;
     enum ColorBG curBgClr = slider->isFoc ? slider->clrs.bgFoc: slider->clrs.bg;
 
@@ -106,8 +106,6 @@ static void sliderDraw(struct Slider *slider) {
 }
 
 static void sliderIncr(struct Slider *slider, int incr) {
-    if (slider == NULL) return;
-
     int maxDivs = slider->height * (barsVertLen - 1);
     if (incr < 0 && slider->divVal < abs(incr)) {
         slider->divVal = 0;
@@ -172,6 +170,8 @@ void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int heig
     slider->clrs.bg = box->sliderClrs.bg;
     slider->clrs.fgFoc = box->sliderClrs.fgFoc;
     slider->clrs.bgFoc = box->sliderClrs.bgFoc;
+
+    slider->isFoc = box->elementsLen == 0 ? true : false;
     
     int maxDivs = height * (barsVertLen - 1);
     slider->divVal = maxDivs / 2;
