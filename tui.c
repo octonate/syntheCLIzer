@@ -56,7 +56,12 @@ void boxAddRadios(struct Box *box, struct Radios *radios, int x, int y, char *la
     radios->val = 0;
     radios->selectedButtonIdx = 0;
 
-    radios->isFoc = box->elementsLen == 0  && box->isFoc ? true : false;
+    if (box->elementsLen == 0  && box->isFoc) {
+        radios->isFoc = true;
+        setKeyRepeatRate(RADIOS);
+    } else {
+        radios->isFoc = false;
+    }
     
     box->elements[box->elementsLen].ptr.radios = radios;
     box->elements[box->elementsLen].type = RADIOS;
@@ -171,7 +176,12 @@ void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int heig
     slider->clrs.fgFoc = box->sliderClrs.fgFoc;
     slider->clrs.bgFoc = box->sliderClrs.bgFoc;
 
-    slider->isFoc = box->elementsLen == 0 && box->isFoc ? true : false;
+    if (box->elementsLen == 0  && box->isFoc) {
+        slider->isFoc = true;
+        setKeyRepeatRate(SLIDER);
+    } else {
+        slider->isFoc = false;
+    }
     
     int maxDivs = height * (barsVertLen - 1);
     slider->divVal = maxDivs / 2;
