@@ -320,7 +320,9 @@ void tuiNextBox(struct Tui *tui) {
         ++tui->focBoxIdx;
     }
 
-    boxToggleFocus(tui->boxes[tui->focBoxIdx]);
+    struct Box *focBox = tui->boxes[tui->focBoxIdx];
+    boxToggleFocus(focBox);
+    setKeyRepeatRate(focBox->elements[focBox->focElementIdx].type);
 }
 
 void tuiPrevBox(struct Tui *tui) {
@@ -332,7 +334,9 @@ void tuiPrevBox(struct Tui *tui) {
         --tui->focBoxIdx;
     }
 
-    boxToggleFocus(tui->boxes[tui->focBoxIdx]);
+    struct Box *focBox = tui->boxes[tui->focBoxIdx];
+    boxToggleFocus(focBox);
+    setKeyRepeatRate(focBox->elements[focBox->focElementIdx].type);
 }
 
 void tuiAddBox(struct Tui *tui, struct Box *box, int x, int y, int width, int height, char *label, enum OutlineStyle style) {
