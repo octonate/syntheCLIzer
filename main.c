@@ -33,12 +33,18 @@ int main() {
     boxAddSlider(&box, &sliderS, 5, 1, 4, INT16_MIN, INT16_MAX, 's');
     boxAddSlider(&box, &sliderR, 7, 1, 4, 0, 2000, 'r');
 
-    struct Radios shape;
+    struct Radios shape, shape2;
     boxAddRadios(&box, &shape, 10, 1, "shape");
+    boxAddRadios(&box2, &shape2, 10, 1, "shape");
     radiosAddButton(&shape, "sin", SINE);
     radiosAddButton(&shape, "sqr", SQUARE);
     radiosAddButton(&shape, "tri", TRI);
     radiosAddButton(&shape, "saw", SAW);
+
+    radiosAddButton(&shape2, "sin", SINE);
+    radiosAddButton(&shape2, "sqr", SQUARE);
+    radiosAddButton(&shape2, "tri", TRI);
+    radiosAddButton(&shape2, "saw", SAW);
 
 
     struct Synth synth;
@@ -55,7 +61,7 @@ int main() {
 
     struct Oscillator osc1, osc2, osc3;
     synthAddOsc(&synth, &osc1, &octaveDown.out, &(enum Waveform){SAW});
-    synthAddOsc(&synth, &osc2, &octaveUp.out, &(enum Waveform){SINE});
+    synthAddOsc(&synth, &osc2, &octaveUp.out, (enum Waveform *)&shape2.val);
     synthAddOsc(&synth, &osc3, &input1.val, (enum Waveform *)&shape.val);
 
 
