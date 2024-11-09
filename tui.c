@@ -350,6 +350,8 @@ void tuiAddBox(struct Tui *tui, struct Box *box, int x, int y, int width, int he
     box->sliderClrs.bgFoc = defaultSliderClrs.bgFoc;
     box->focElementIdx = 0;
 
+    box->isFoc = tui->boxesLen == 0 ? true : false;
+
     boxDrawOutline(box);
 
     tui->boxes[tui->boxesLen] = box;
