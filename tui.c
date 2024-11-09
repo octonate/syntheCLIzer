@@ -304,9 +304,15 @@ void tuiInit(struct Tui *tui, char *label) {
     tui->focBoxIdx = 0;
 }
 
+void boxToggleFocus(struct Box *box) {
+    box->elements[box->focElementIdx].isFoc = box->isFoc ? false : true;
+    box->isFoc = box->isFoc ? false : true;
+    boxDrawOutline(box);
+    elementDraw(box->elements[box->focElementIdx]);
+}
+
 void tuiNextBox(struct Tui *tui) {
-    tui->boxes[tui->focBoxIdx]->isFoc = false;
-    boxDrawOutline(tui->boxes[tui->focBoxIdx]);
+    boxToggleFocus(tui->boxes[tui->focBoxIdx]);
 
     if (tui->focBoxIdx == tui->boxesLen - 1) {
         tui->focBoxIdx = 0;
@@ -314,13 +320,11 @@ void tuiNextBox(struct Tui *tui) {
         ++tui->focBoxIdx;
     }
 
-    tui->boxes[tui->focBoxIdx]->isFoc = true;
-    boxDrawOutline(tui->boxes[tui->focBoxIdx]);
+    boxToggleFocus(tui->boxes[tui->focBoxIdx]);
 }
 
 void tuiPrevBox(struct Tui *tui) {
-    tui->boxes[tui->focBoxIdx]->isFoc = false;
-    boxDrawOutline(tui->boxes[tui->focBoxIdx]);
+    boxToggleFocus(tui->boxes[tui->focBoxIdx]);
 
     if (tui->focBoxIdx == 0) {
         tui->focBoxIdx = tui->boxesLen - 1;
@@ -328,8 +332,7 @@ void tuiPrevBox(struct Tui *tui) {
         --tui->focBoxIdx;
     }
 
-    tui->boxes[tui->focBoxIdx]->isFoc = true;
-    boxDrawOutline(tui->boxes[tui->focBoxIdx]);
+    boxToggleFocus(tui->boxes[tui->focBoxIdx]);
 }
 
 void tuiAddBox(struct Tui *tui, struct Box *box, int x, int y, int width, int height, char *label, enum OutlineStyle style) {
