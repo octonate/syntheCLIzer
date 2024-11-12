@@ -183,6 +183,8 @@ void tuiAddBox(struct Tui *tui, struct Box *box, int x, int y, int width, int he
 
 void boxNextElement(struct Box *box);
 void boxPrevElement(struct Box *box);
+void boxIncrFocElement(struct Box *box);
+void boxDecrFocElement(struct Box *box);
 void boxSetDefaultSliderClrs(struct Box *box, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
 
 void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label);
@@ -191,8 +193,8 @@ void boxAddRadios(struct Box *box, struct Radios *radios, int x, int y, char *la
 void radiosAddButton(struct Radios *radios, char *name, int val);
 void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
 
-void elementIncr(struct Element element);
-void elementDecr(struct Element element);
+//void elementIncr(struct Element element);
+//void elementDecr(struct Element element);
 
 void hello();
 void resetTerm();

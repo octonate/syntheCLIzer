@@ -213,28 +213,32 @@ void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int heig
 }
 
 
-void elementIncr(struct Element element) {
-    switch (element.type) {
+void boxIncrFocElement(struct Box *box) {
+    if (box->elementsLen == 0) return;
+    struct Element curElement = box->elements[box->focElementIdx];
+    switch (curElement.type) {
     case SLIDER:
-        sliderIncr(element.ptr.slider, 1);
+        sliderIncr(curElement.ptr.slider, 1);
         break;
     case RADIOS:
-        radiosSelectButtonUp(element.ptr.radios);
+        radiosSelectButtonUp(curElement.ptr.radios);
         break;
     }
-    elementDraw(element);
+    elementDraw(curElement);
 }
 
-void elementDecr(struct Element element) {
-    switch (element.type) {
+void boxDecrFocElement(struct Box *box) {
+    if (box->elementsLen == 0) return;
+    struct Element curElement = box->elements[box->focElementIdx];
+    switch (curElement.type) {
     case SLIDER:
-        sliderIncr(element.ptr.slider, -1);
+        sliderIncr(curElement.ptr.slider, -1);
         break;
     case RADIOS:
-        radiosSelectButtonDown(element.ptr.radios);
+        radiosSelectButtonDown(curElement.ptr.radios);
         break;
     }
-    elementDraw(element);
+    elementDraw(curElement);
 }
 
 void boxNextElement(struct Box *box) {

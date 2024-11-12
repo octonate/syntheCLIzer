@@ -98,8 +98,9 @@ int main() {
 
 
     while (!quit) {
-        curKey = getchar();
         struct Box *focBox = tui.boxes[tui.focBoxIdx];
+
+        curKey = getchar();
         switch (curKey) {
         case '[':
             input1.gate = true;
@@ -111,11 +112,10 @@ int main() {
             quit = true;
             break;
         case 'k':
-            elementIncr(focBox->elements[focBox->focElementIdx]);
+            boxIncrFocElement(tui.boxes[tui.focBoxIdx]);
             break;
         case 'j':
-            //elementDecr(tui.boxes[tui.focBoxIdx]->elements[focBox->focElementIdx]);
-            elementDecr(focBox->elements[focBox->focElementIdx]);
+            boxDecrFocElement(tui.boxes[tui.focBoxIdx]);
             break;
         case 'h':
             boxPrevElement(focBox);
