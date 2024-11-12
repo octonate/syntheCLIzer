@@ -23,53 +23,65 @@ int main() {
     struct Tui tui;
     tuiInit(&tui, "3xOsc");
 
-    struct Box box, box2;
-    tuiAddBox(&tui, &box, 10, 10, 16, 7, "osc1", THIN);
-    tuiAddBox(&tui, &box2, 30, 10, 16, 7, "osc2", THIN);
+    struct Box oscBox1, oscBox2, oscBox3, env;
+    tuiAddBox(&tui, &oscBox1, 10, 10, 16, 7, "osc1", THIN);
+    tuiAddBox(&tui, &oscBox2, 10, 20, 16, 7, "osc2", THIN);
+    tuiAddBox(&tui, &oscBox3, 10, 30, 16, 7, "osc3", THIN);
+    tuiAddBox(&tui, &env, 30, 10, 9, 7, "env", THIN);
 
-    struct Slider sliderA, sliderD, sliderS, sliderR;
-    boxAddSlider(&box, &sliderA, 1, 1, 4, 0, 1000, 'a');
-    boxAddSlider(&box, &sliderD, 3, 1, 4, 0, 1000, 'd');
-    boxAddSlider(&box, &sliderS, 5, 1, 4, INT16_MIN, INT16_MAX, 's');
-    boxAddSlider(&box, &sliderR, 7, 1, 4, 0, 2000, 'r');
+    struct Radios shape1, shape2, shape3;
+    boxAddRadios(&oscBox1, &shape1, 1, 1, "shape");
+    boxAddRadios(&oscBox2, &shape2, 1, 1, "shape");
+    boxAddRadios(&oscBox3, &shape3, 1, 1, "shape");
 
-    struct Radios shape, shape2;
-    boxAddRadios(&box, &shape, 10, 1, "shape");
-    boxAddRadios(&box2, &shape2, 10, 1, "shape");
-    radiosAddButton(&shape, "sin", SINE);
-    radiosAddButton(&shape, "sqr", SQUARE);
-    radiosAddButton(&shape, "tri", TRI);
-    radiosAddButton(&shape, "saw", SAW);
+    radiosAddButton(&shape1, "sin", WAV_SINE);
+    radiosAddButton(&shape1, "sqr", WAV_SQUARE);
+    radiosAddButton(&shape1, "tri", WAV_TRI);
+    radiosAddButton(&shape1, "saw", WAV_SAW);
+    radiosAddButton(&shape2, "sin", WAV_SINE);
+    radiosAddButton(&shape2, "sqr", WAV_SQUARE);
+    radiosAddButton(&shape2, "tri", WAV_TRI);
+    radiosAddButton(&shape2, "saw", WAV_SAW);
+    radiosAddButton(&shape3, "sin", WAV_SINE);
+    radiosAddButton(&shape3, "sqr", WAV_SQUARE);
+    radiosAddButton(&shape3, "tri", WAV_TRI);
+    radiosAddButton(&shape3, "saw", WAV_SAW);
 
-    radiosAddButton(&shape2, "sin", SINE);
-    radiosAddButton(&shape2, "sqr", SQUARE);
-    radiosAddButton(&shape2, "tri", TRI);
-    radiosAddButton(&shape2, "saw", SAW);
+    struct Slider detune1, detune2, detune3;
+    boxAddSlider(&oscBox1, &detune1, 7, 1, 4, 0.9, 1.1, 'T');
+    boxAddSlider(&oscBox2, &detune2, 7, 1, 4, 0.9, 1.1, 'T');
+    boxAddSlider(&oscBox3, &detune3, 7, 1, 4, 0.9, 1.1, 'T');
 
+    struct Slider attack, decay, sustain, release;
+    boxAddSlider(&env, &attack, 1, 1, 4, 0, 1000, 'a');
+    boxAddSlider(&env, &decay, 3, 1, 4, 0, 1000, 'd');
+    boxAddSlider(&env, &sustain, 5, 1, 4, INT16_MIN, INT16_MAX, 's');
+    boxAddSlider(&env, &release, 7, 1, 4, 0, 2000, 'r');
 
-    struct Synth synth;
-    synthInit(&synth);
 
     struct NoteInput input1 = {
         .gate = 0,
         .val = 0,
     };
 
-    struct Amplifier octaveUp, octaveDown;
-    synthAddAmp(&synth, &octaveUp, &input1.val, 2);
-    synthAddAmp(&synth, &octaveDown, &input1.val, 0.5);
+    struct Synth synth;
+    synthInit(&synth);
+
+    struct Amplifier detuner1, detuner2, detuner3;
+    synthAddAmp(&synth, &detuner1, &input1.val, &detune1.val);
+    synthAddAmp(&synth, &detuner2, &input1.val, &detune2.val);
+    synthAddAmp(&synth, &detuner3, &input1.val, &detune3.val);
 
     struct Oscillator osc1, osc2, osc3;
-    synthAddOsc(&synth, &osc1, &octaveDown.out, &(enum Waveform){SAW});
-    synthAddOsc(&synth, &osc2, &octaveUp.out, (enum Waveform *)&shape2.val);
-    synthAddOsc(&synth, &osc3, &input1.val, (enum Waveform *)&shape.val);
-
+    synthAddOsc(&synth, &osc1, &detuner1.out, (enum Waveform *)&shape1.val);
+    synthAddOsc(&synth, &osc2, &detuner2.out, (enum Waveform *)&shape2.val);
+    synthAddOsc(&synth, &osc3, &detuner3.out, (enum Waveform *)&shape3.val);
 
     struct Mixer mixer;
     synthAddmixer(&synth, &mixer, (int16_t *[]) {&osc1.out, &osc2.out, &osc3.out, NULL});
 
     struct Envelope env1;
-    synthAddEnv(&synth, &env1, &input1.gate, &sliderA.val, &sliderD.val, &sliderS.val, &sliderR.val);
+    synthAddEnv(&synth, &env1, &input1.gate, &attack.val, &decay.val, &sustain.val, &release.val);
 
     struct Attenuator attr;
     synthAddAttr(&synth, &attr, &mixer.out, &env1.out);
@@ -77,7 +89,6 @@ int main() {
     synth.input = &input1;
 
     synth.outPtr = &attr.out;
-
 
     bool quit = false;
     int curKey;
@@ -118,10 +129,10 @@ int main() {
             boxDecrFocElement(tui.boxes[tui.focBoxIdx]);
             break;
         case 'h':
-            boxPrevElement(focBox);
+            boxPrevElement(tui.boxes[tui.focBoxIdx]);
             break;
         case 'l':
-            boxNextElement(focBox);
+            boxNextElement(tui.boxes[tui.focBoxIdx]);
             break;
         case 'H':
             tuiPrevBox(&tui);
