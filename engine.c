@@ -82,16 +82,16 @@ void oscRun(struct Oscillator *osc) {
         osc->t = 0;
     }
     switch (*osc->waveform) {
-    case SINE:
+    case WAV_SINE:
         sample = oscSine(freq, osc->t);
         break;
-    case SQUARE:
+    case WAV_SQUARE:
         sample = oscSquare(freq, osc->t);
         break;
-    case TRI:
+    case WAV_TRI:
         sample = oscTri(freq, osc->t);
         break;
-    case SAW:
+    case WAV_SAW:
         sample = oscSaw(freq, osc->t);
         break;
     }

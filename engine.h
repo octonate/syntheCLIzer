@@ -13,10 +13,10 @@
 extern int keyNum;
 
 enum Waveform {
-    SINE,
-    SQUARE,
-    TRI,
-    SAW
+    WAV_SINE,
+    WAV_SQUARE,
+    WAV_TRI,
+    WAV_SAW
 };
 
 struct NoteInput {
