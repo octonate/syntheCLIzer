@@ -110,7 +110,7 @@ void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, e
 }
 
 void ampRun(struct Amplifier *amp) {
-    double freqOut = sampleToFreq(*amp->sampleIn) * amp->gain;
+    double freqOut = sampleToFreq(*amp->sampleIn) * *amp->gain;
     double sampleOut = freqToSample(freqOut);
     if (sampleOut > INT16_MAX) {
         amp->out = INT16_MAX;
@@ -121,7 +121,7 @@ void ampRun(struct Amplifier *amp) {
     }
 }
 
-void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, double gain) {
+void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, double *gain) {
     amp->sampleIn = sampleIn;
     amp->gain = gain;
     amp->out = INT16_MIN;
