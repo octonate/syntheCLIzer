@@ -83,8 +83,10 @@ void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum 
 }
 
 static void sliderDraw(struct Slider *slider) {
-    enum ColorFG curFgClr = slider->isFoc ? slider->clrs.fgFoc: slider->clrs.fg;
-    enum ColorBG curBgClr = slider->isFoc ? slider->clrs.bgFoc: slider->clrs.bg;
+    SET_CURSOR_POS(1, 1);
+    printf("slider-.isFoc = %d", slider->isFoc);
+    enum ColorFG curFgClr = slider->isFoc ? slider->clrs.fgFoc : slider->clrs.fg;
+    enum ColorBG curBgClr = slider->isFoc ? slider->clrs.bgFoc : slider->clrs.bg;
 
     enum ColorFG curLabelFgClr = slider->isFoc ? CLR_BR_W : CLR_W;
     enum ColorBG curLabelBgClr = slider->isFoc ? CLR_BG_BR_K : CLR_BG_K;
@@ -163,37 +165,6 @@ void radiosAddButton(struct Radios *radios, char *name, int val) {
    radiosDraw(radios); 
 }
 
-void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label) {
-    slider->x = box->x + x;
-    slider->y = box->y + y;
-    slider->height = height;
-    slider->minVal = minVal;
-    slider->maxVal = maxVal;
-    slider->label = label;
-
-    slider->clrs.fg = box->sliderClrs.fg;
-    slider->clrs.bg = box->sliderClrs.bg;
-    slider->clrs.fgFoc = box->sliderClrs.fgFoc;
-    slider->clrs.bgFoc = box->sliderClrs.bgFoc;
-
-    if (box->elementsLen == 0  && box->isFoc) {
-        slider->isFoc = true;
-        setKeyRepeatRate(SLIDER);
-    } else {
-        slider->isFoc = false;
-    }
-    
-    int maxDivs = height * (barsVertLen - 1);
-    slider->divVal = maxDivs / 2;
-    slider->val = (double) slider->divVal / maxDivs * (maxVal - minVal) + minVal;
-
-    box->elements[box->elementsLen].ptr.slider = slider;
-    box->elements[box->elementsLen].type = SLIDER;
-    ++box->elementsLen;
-
-    sliderDraw(slider);
-}
-
 static void elementDraw(struct Element element) {
     switch (element.type) {
     case SLIDER:
@@ -208,6 +179,39 @@ static void elementDraw(struct Element element) {
 
     fflush(stdout);
 }
+
+void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label) {
+    slider->x = box->x + x;
+    slider->y = box->y + y;
+    slider->height = height;
+    slider->minVal = minVal;
+    slider->maxVal = maxVal;
+    slider->label = label;
+
+    slider->clrs.fg = box->sliderClrs.fg;
+    slider->clrs.bg = box->sliderClrs.bg;
+    slider->clrs.fgFoc = box->sliderClrs.fgFoc;
+    slider->clrs.bgFoc = box->sliderClrs.bgFoc;
+    
+    int maxDivs = height * (barsVertLen - 1);
+    slider->divVal = maxDivs / 2;
+    slider->val = (double) slider->divVal / maxDivs * (maxVal - minVal) + minVal;
+
+    if (box->elementsLen == 0) {
+        box->elements[box->elementsLen].isFoc = true;
+        slider->isFoc = true;
+        setKeyRepeatRate(SLIDER);
+    } else {
+        box->elements[0].isFoc = false;
+    }
+
+    box->elements[box->elementsLen].ptr.slider = slider;
+    box->elements[box->elementsLen].type = SLIDER;
+    elementDraw(box->elements[box->elementsLen]);
+
+    ++box->elementsLen;
+}
+
 
 void elementIncr(struct Element element) {
     switch (element.type) {
@@ -315,10 +319,12 @@ void tuiInit(struct Tui *tui, char *label) {
 }
 
 void boxToggleFocus(struct Box *box) {
-    box->elements[box->focElementIdx].isFoc = box->isFoc ? false : true;
+    if (box->elementsLen > 0) {
+        box->elements[box->focElementIdx].isFoc = box->isFoc ? false : true;
+        elementDraw(box->elements[box->focElementIdx]);
+    }
     box->isFoc = box->isFoc ? false : true;
     boxDrawOutline(box);
-    elementDraw(box->elements[box->focElementIdx]);
 }
 
 void tuiNextBox(struct Tui *tui) {
