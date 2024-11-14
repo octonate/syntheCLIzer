@@ -15,6 +15,7 @@ void synthInit(struct Synth *synth) {
     synth->ampsLen = 0;
     synth->attrsLen = 0;
     synth->mixersLen = 0;
+    synth->distortionsLen = 0;
 }
 
 static void mixerRun(struct Mixer *mixer) {
@@ -32,6 +33,20 @@ void synthAddmixer(struct Synth *synth, struct Mixer *mixer, int16_t *samplesIn[
 
     synth->mixers[synth->mixersLen] = mixer;
     ++synth->mixersLen;
+}
+
+void synthAddDistortion(struct Synth *synth, struct Distortion *distortion, int16_t *sampleIn, double *slope) {
+    distortion->sampleIn = sampleIn;
+    distortion->slope = slope;
+    distortion->out = INT16_MIN;
+
+    synth->distortions[synth->distortionsLen] = distortion;
+    ++synth->distortionsLen;
+}
+
+static void distortionRun(struct Distortion *distortion) {
+    double x = (double) (*distortion->sampleIn + INT16_MAX) / (INT16_MAX - INT16_MIN);
+    distortion->out = (INT16_MAX - INT16_MIN) * pow(x, *distortion->slope) / (pow(x, *distortion->slope) + pow(1 - x, *distortion->slope)) + INT16_MIN;
 }
 
 double sampleToFreq(int16_t sample) {
@@ -219,6 +234,9 @@ void synthRun(struct Synth *synth) {
     }
     for (int i = 0; i < synth->ampsLen; i++) {
         ampRun(synth->amps[i]);
+    }
+    for (int i = 0; i < synth->distortionsLen; i++) {
+        distortionRun(synth->distortions[i]);
     }
 }
 

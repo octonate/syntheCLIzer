@@ -52,11 +52,12 @@ int main() {
     boxAddSlider(&oscBox2, &detune2, 7, 1, 4, 0.9, 1.1, 'T');
     boxAddSlider(&oscBox3, &detune3, 7, 1, 4, 0.9, 1.1, 'T');
 
-    struct Slider attack, decay, sustain, release;
+    struct Slider attack, decay, sustain, release, drive;
     boxAddSlider(&env, &attack, 1, 1, 4, 0, 1000, 'a');
     boxAddSlider(&env, &decay, 3, 1, 4, 0, 1000, 'd');
     boxAddSlider(&env, &sustain, 5, 1, 4, INT16_MIN, INT16_MAX, 's');
     boxAddSlider(&env, &release, 7, 1, 4, 0, 2000, 'r');
+    boxAddSlider(&env, &drive, 9, 1, 4, 0, 10, 'G');
 
 
     struct NoteInput input1 = {
@@ -80,11 +81,14 @@ int main() {
     struct Mixer mixer;
     synthAddmixer(&synth, &mixer, (int16_t *[]) {&osc1.out, &osc2.out, &osc3.out, NULL});
 
+    struct Distortion distortion;
+    synthAddDistortion(&synth, &distortion, &mixer.out, &drive.val);
+
     struct Envelope env1;
     synthAddEnv(&synth, &env1, &input1.gate, &attack.val, &decay.val, &sustain.val, &release.val);
 
     struct Attenuator attr;
-    synthAddAttr(&synth, &attr, &mixer.out, &env1.out);
+    synthAddAttr(&synth, &attr, &distortion.out, &env1.out);
 
     synth.input = &input1;
 
@@ -142,7 +146,7 @@ int main() {
             break;
         default:
             input1.gate = true;
-            input1.val = freqToSample(200 * pow(2, (double) (curKey - 48) / 12));
+            input1.val = freqToSample(100 * pow(2, (double) (curKey - 48) / 12));
         }
     }
 

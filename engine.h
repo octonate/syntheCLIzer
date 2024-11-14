@@ -53,7 +53,7 @@ struct Amplifier {
 
 struct Distortion {
     int16_t *sampleIn;
-    double slope;
+    double *slope;
     int16_t out;
 };
 
@@ -75,11 +75,13 @@ struct Synth {
     struct Amplifier *amps[LIST_BUF_SIZE];
     struct Attenuator *attrs[LIST_BUF_SIZE];
     struct Mixer *mixers[LIST_BUF_SIZE];
+    struct Distortion *distortions[LIST_BUF_SIZE];
     int oscsLen;
     int envsLen;
     int ampsLen;
     int attrsLen;
     int mixersLen;
+    int distortionsLen;
     int16_t *outPtr;
 };
 
@@ -91,6 +93,7 @@ void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, e
 void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, double *gain);
 void synthAddAttr(struct Synth *synth, struct Attenuator *attr, int16_t *sampleIn, int16_t *gainSample);
 void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *attackPtr, double *decayPtr, double *sustainPtr, double *releasePtr);
+void synthAddDistortion(struct Synth *synth, struct Distortion *distortion, int16_t *sampleIn, double *slope);
 
 double sampleToFreq(int16_t sample);
 int16_t freqToSample(double freq);
