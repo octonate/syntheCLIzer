@@ -95,7 +95,7 @@ int main() {
     synth.outPtr = &attr.out;
 
     struct Scope scope;
-    scopeInit(&scope, 50, 10, 10, 10, synth.outPtr);
+    tuiAddScope(&scope, 50, 10, 10, 10, synth.outPtr);
 
     bool quit = false;
     int curKey;

@@ -186,8 +186,7 @@ extern const char *clrsFG[];
 extern const char *clrsBG[];
 extern const char *outlineChars[STYLE_COUNT][BOX_CHAR_COUNT];
 
-void scopeInit(struct Scope *scope, int x, int y, int width, int height, int16_t *in);
-void scopeDraw(struct Scope *scope);
+void tuiAddScope(struct Scope *scope, int x, int y, int width, int height, int16_t *in);
 
 void tuiInit(struct Tui *tui, char *label);
 void tuiNextBox(struct Tui *tui);

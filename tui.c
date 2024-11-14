@@ -1,4 +1,3 @@
-#include <cstdint>
 #include <stdio.h>
 #include <unistd.h>
 #include <termios.h>
@@ -35,7 +34,7 @@ static void setKeyRepeatRate(enum ElementType elementType) {
 }
 static void boxDrawOutline(struct Box *box);
 
-void scopeInit(struct Scope *scope, int x, int y, int width, int height, int16_t *in) {
+void tuiAddScope(struct Scope *scope, int x, int y, int width, int height, int16_t *in) {
     scope->x = x;
     scope->y = y;
     scope->width = width;
