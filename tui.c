@@ -32,7 +32,31 @@ static void setKeyRepeatRate(enum ElementType elementType) {
         break;
     }
 }
+static void boxDrawOutline(struct Box *box);
 
+void scopeInit(struct Scope *scope, int x, int y, int width, int height, int16_t *in) {
+    scope->x = x;
+    scope->y = y;
+    scope->width = width;
+    scope->height = height;
+    scope->in = in;
+    scope->t = 0;
+
+    struct Box scopeBox = {
+        .x = x,
+        .y = y,
+        .width = width,
+        .height = height,
+        .isFoc = false,
+        .label = "",
+        .style = THIN,
+    };
+    boxDrawOutline(&scopeBox);
+}
+
+void scopeDraw(struct Scope *scope) {
+
+}
 
 static void radiosDraw(struct Radios *radios) {
     SET_CURSOR_POS(radios->x, radios->y);
