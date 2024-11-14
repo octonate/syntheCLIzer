@@ -17,7 +17,7 @@ void synthInit(struct Synth *synth) {
     synth->mixersLen = 0;
 }
 
-void mixerRun(struct Mixer *mixer) {
+static void mixerRun(struct Mixer *mixer) {
     double total = 0;
     int len;
     for (len = 0; mixer->samplesIn[len] != NULL; len++) {
@@ -55,25 +55,25 @@ double sampleToDouble(int16_t sample, double rangeMin, double rangeMax) {
 }
 
 
-int16_t oscSine(double freq, uint16_t t) {
+static int16_t oscSine(double freq, uint16_t t) {
     return INT16_MAX * sin(M_TAU * t * freq / SAMPLE_RATE);
 }
 
-int16_t oscSquare(double freq, uint16_t t) {
+static int16_t oscSquare(double freq, uint16_t t) {
     return (t < SAMPLE_RATE / freq / 2 ? INT16_MAX : INT16_MIN);
 }
 
-int16_t oscSaw(double freq, uint16_t t) {
+static int16_t oscSaw(double freq, uint16_t t) {
     double period = SAMPLE_RATE / freq;
     return (int16_t) INT16_MAX * (2 * fmod(t, period) / period - 1);
 }
 
-int16_t oscTri(double freq, uint16_t t) {
+static int16_t oscTri(double freq, uint16_t t) {
     double period = SAMPLE_RATE / freq;
     return (int16_t) INT16_MAX * (4 * fmod((t < period / 2 ? t : -t), period) / period - 1);
 }
 
-void oscRun(struct Oscillator *osc) {
+static void oscRun(struct Oscillator *osc) {
     double freq = sampleToFreq(*osc->freqSample);
     double period = SAMPLE_RATE / freq;
     int16_t sample;
@@ -109,7 +109,7 @@ void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, e
     ++synth->oscsLen;
 }
 
-void ampRun(struct Amplifier *amp) {
+static void ampRun(struct Amplifier *amp) {
     double freqOut = sampleToFreq(*amp->sampleIn) * *amp->gain;
     double sampleOut = freqToSample(freqOut);
     if (sampleOut > INT16_MAX) {
@@ -130,7 +130,7 @@ void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, 
     ++synth->ampsLen;
 }
 
-void attrRun(struct Attenuator *attr) {
+static void attrRun(struct Attenuator *attr) {
     attr->out = *attr->sampleIn * (double) (*attr->amount - INT16_MIN) / (INT16_MAX - INT16_MIN);
 }
 
@@ -143,7 +143,7 @@ void synthAddAttr(struct Synth *synth, struct Attenuator *attr, int16_t *sampleI
     ++synth->attrsLen;
 }
 
-void envRun(struct Envelope *env) {
+static void envRun(struct Envelope *env) {
     uint32_t attackPeriod = *env->attackMs * (double) SAMPLE_RATE / 1000;
     uint32_t decayPeriod = *env->decayMs * (double) SAMPLE_RATE / 1000;
     uint32_t releasePeriod = *env->releaseMs * (double) SAMPLE_RATE / 1000;

@@ -51,6 +51,12 @@ struct Amplifier {
     int16_t out;
 };
 
+struct Distortion {
+    int16_t *sampleIn;
+    double slope;
+    int16_t out;
+};
+
 struct Attenuator {
     int16_t *sampleIn;
     int16_t *amount;
