@@ -98,6 +98,7 @@ enum OutlineChar {
 enum ElementType {
     SLIDER,
     RADIOS,
+    SCOPE,
 };
 
 struct ColorInfo {
@@ -135,6 +136,15 @@ struct Radios {
     int y;
     int val;
     bool isFoc;
+};
+
+struct Scope {
+    int x;
+    int y;
+    int width;
+    int height;
+    int16_t *in;
+    int16_t *t;
 };
 
 struct Element {
@@ -189,6 +199,7 @@ void boxSetDefaultSliderClrs(struct Box *box, enum ColorFG fg, enum ColorBG bg, 
 
 void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int height, double minVal, double maxVal, char label);
 void boxAddRadios(struct Box *box, struct Radios *radios, int x, int y, char *label);
+void boxAddScope(struct Box *box, struct Scope *scope, int x, int y, int width, int height, int16_t *in, int16_t *t);
 
 void radiosAddButton(struct Radios *radios, char *name, int val);
 void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
