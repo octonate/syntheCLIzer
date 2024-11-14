@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <stdio.h>
 #include <unistd.h>
 #include <termios.h>
@@ -41,6 +42,7 @@ void scopeInit(struct Scope *scope, int x, int y, int width, int height, int16_t
     scope->height = height;
     scope->in = in;
     scope->t = 0;
+    memset(scope->prevIn, 0, sizeof(scope->prevIn));
 
     struct Box scopeBox = {
         .x = x,
@@ -55,7 +57,9 @@ void scopeInit(struct Scope *scope, int x, int y, int width, int height, int16_t
 }
 
 void scopeDraw(struct Scope *scope) {
-
+    int y = (double) *scope->in / (INT16_MAX - INT16_MIN) * scope->height;
+    SET_CURSOR_POS(scope->x, scope->y + y);
+    printf("*");
 }
 
 static void radiosDraw(struct Radios *radios) {

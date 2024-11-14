@@ -142,6 +142,7 @@ struct Scope {
     int y;
     int width;
     int height;
+    int16_t prevIn[LIST_BUF_SIZE];
     int16_t *in;
     int16_t *t;
 };
