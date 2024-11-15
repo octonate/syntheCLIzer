@@ -142,9 +142,11 @@ struct Scope {
     int y;
     int width;
     int height;
-    int16_t prevIn[LIST_BUF_SIZE];
+    int horScale;
+    int xPos;
+    int16_t prevIn;
     int16_t *in;
-    int16_t *t;
+    int16_t t;
 };
 
 struct Element {
@@ -186,7 +188,8 @@ extern const char *clrsFG[];
 extern const char *clrsBG[];
 extern const char *outlineChars[STYLE_COUNT][BOX_CHAR_COUNT];
 
-void tuiAddScope(struct Scope *scope, int x, int y, int width, int height, int16_t *in);
+void tuiAddScope(struct Scope *scope, int16_t *in, int x, int y, int width, int height, int horScale);
+void tuiDrawScope(struct Scope *scope);
 
 void tuiInit(struct Tui *tui, char *label);
 void tuiNextBox(struct Tui *tui);

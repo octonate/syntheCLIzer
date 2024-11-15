@@ -6,6 +6,7 @@
 #include <err.h>
 #include "common.h"
 #include "engine.h"
+#include "tui.h"
 
 int keyNum = 49;
 
@@ -238,9 +239,10 @@ void synthRun(struct Synth *synth) {
     for (int i = 0; i < synth->distortionsLen; i++) {
         distortionRun(synth->distortions[i]);
     }
+    tuiDrawScope(synth->scope);
 }
 
-void audioCallback(void *userdata, Uint8 *stream, int len) {
+void audioCallback(void *userdata, uint8_t *stream, int len) {
     struct Synth *synth = (struct Synth*) userdata;
     int16_t *stream16 = (int16_t*) stream;
 

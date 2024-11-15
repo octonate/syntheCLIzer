@@ -79,7 +79,8 @@ int main() {
     synthAddOsc(&synth, &osc3, &detuner3.out, (enum Waveform *)&shape3.val);
 
     struct Mixer mixer;
-    synthAddmixer(&synth, &mixer, (int16_t *[]) {&osc1.out, &osc2.out, &osc3.out, NULL});
+    //synthAddmixer(&synth, &mixer, (int16_t *[]) {&osc1.out, &osc2.out, &osc3.out, NULL});
+    synthAddmixer(&synth, &mixer, (int16_t *[]) {&osc1.out, NULL});
 
     struct Distortion distortion;
     synthAddDistortion(&synth, &distortion, &mixer.out, &drive.val);
@@ -88,14 +89,15 @@ int main() {
     synthAddEnv(&synth, &env1, &input1.gate, &attack.val, &decay.val, &sustain.val, &release.val);
 
     struct Attenuator attr;
-    synthAddAttr(&synth, &attr, &distortion.out, &env1.out);
+    synthAddAttr(&synth, &attr, &mixer.out, &env1.out);
 
     synth.input = &input1;
 
     synth.outPtr = &attr.out;
 
     struct Scope scope;
-    tuiAddScope(&scope, 50, 10, 10, 10, synth.outPtr);
+    tuiAddScope(&scope, &attr.out, 50, 10, 90, 50, 10);
+    synth.scope = &scope;
 
     bool quit = false;
     int curKey;

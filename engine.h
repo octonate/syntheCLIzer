@@ -83,6 +83,7 @@ struct Synth {
     int mixersLen;
     int distortionsLen;
     int16_t *outPtr;
+    struct Scope *scope;
 };
 
 void synthInit(struct Synth *synth);

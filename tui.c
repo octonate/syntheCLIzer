@@ -34,14 +34,17 @@ static void setKeyRepeatRate(enum ElementType elementType) {
 }
 static void boxDrawOutline(struct Box *box);
 
-void tuiAddScope(struct Scope *scope, int x, int y, int width, int height, int16_t *in) {
+void tuiAddScope(struct Scope *scope, int16_t *in, int x, int y, int width, int height, int horScale) {
+    scope->in = in;
     scope->x = x;
     scope->y = y;
     scope->width = width;
     scope->height = height;
-    scope->in = in;
+    scope->horScale = horScale;
+
     scope->t = 0;
-    memset(scope->prevIn, 0, sizeof(scope->prevIn));
+    scope->xPos= 0;
+    scope->prevIn = INT16_MIN;
 
     struct Box scopeBox = {
         .x = x,
@@ -55,10 +58,43 @@ void tuiAddScope(struct Scope *scope, int x, int y, int width, int height, int16
     boxDrawOutline(&scopeBox);
 }
 
-void scopeDraw(struct Scope *scope) {
-    int y = (double) *scope->in / (INT16_MAX - INT16_MIN) * scope->height;
-    SET_CURSOR_POS(scope->x, scope->y + y);
+void tuiDrawScope(struct Scope *scope) {
+    ++scope->t;
+    if (scope->t % scope->horScale != 0) return;
+
+    int widthInner = scope->width - 2;
+    int heightInner = scope->height - 2;
+    int xInner = scope->x + 1;
+    int yInner = scope->y + 1;
+
+    if (*scope->in <= 0 && scope->prevIn >= 0 && scope->xPos >= widthInner) {
+        scope->xPos = 0;
+    }
+    if (scope->xPos >= widthInner) {
+        scope->prevIn = *scope->in;
+        return;
+    }
+
+    printf("%s", TEXT_RESET);
+    int curY = (double) (*scope->in + INT16_MAX) / (INT16_MAX - INT16_MIN) * heightInner;
+    int prevY = (double) (scope->prevIn + INT16_MAX) / (INT16_MAX - INT16_MIN) * heightInner;
+
+    SET_CURSOR_POS(xInner + scope->xPos, yInner);
+    for (int i = 0; i < heightInner; i++) {
+        if (((i > curY && i <= prevY) || (i < curY && i >= prevY)) && scope->xPos > 0) {
+            printf("*");
+        } else {
+            printf(" ");
+        }
+        printf("%s", CURSOR_DOWN);
+        MOVE_CURSOR_LEFT(1);
+    }
+    SET_CURSOR_POS(xInner + scope->xPos, yInner + curY);
     printf("*");
+
+    scope->prevIn = *scope->in;
+    ++scope->xPos;
+    fflush(stdout);
 }
 
 static void radiosDraw(struct Radios *radios) {
@@ -111,7 +147,6 @@ void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum 
 
 static void sliderDraw(struct Slider *slider) {
     SET_CURSOR_POS(1, 1);
-    printf("slider-.isFoc = %d", slider->isFoc);
     enum ColorFG curFgClr = slider->isFoc ? slider->clrs.fgFoc : slider->clrs.fg;
     enum ColorBG curBgClr = slider->isFoc ? slider->clrs.bgFoc : slider->clrs.bg;
 
