@@ -147,6 +147,7 @@ struct Scope {
     int16_t prevIn;
     int16_t *in;
     int16_t t;
+    bool canTrigger;
 };
 
 struct Element {

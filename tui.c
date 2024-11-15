@@ -43,8 +43,9 @@ void tuiAddScope(struct Scope *scope, int16_t *in, int x, int y, int width, int 
     scope->horScale = horScale;
 
     scope->t = 0;
-    scope->xPos= 0;
+    scope->xPos = 0;
     scope->prevIn = INT16_MIN;
+    scope->canTrigger = false;
 
     struct Box scopeBox = {
         .x = x,
@@ -60,20 +61,25 @@ void tuiAddScope(struct Scope *scope, int16_t *in, int x, int y, int width, int 
 
 void tuiDrawScope(struct Scope *scope) {
     ++scope->t;
-    if (scope->t % scope->horScale != 0) return;
 
     int widthInner = scope->width - 2;
     int heightInner = scope->height - 2;
     int xInner = scope->x + 1;
     int yInner = scope->y + 1;
 
-    if (*scope->in <= 0 && scope->prevIn >= 0 && scope->xPos >= widthInner) {
+    if (scope->xPos >= widthInner && scope->prevIn < *scope->in) {
+        scope->canTrigger = true;
+    }
+    if (scope->prevIn > *scope->in && scope->canTrigger) {
         scope->xPos = 0;
+        scope->t = 0;
+        scope->canTrigger = false;
     }
     if (scope->xPos >= widthInner) {
         scope->prevIn = *scope->in;
         return;
     }
+    if (scope->t % scope->horScale != 0) return;
 
     printf("%s", TEXT_RESET);
     int curY = (double) (*scope->in + INT16_MAX) / (INT16_MAX - INT16_MIN) * heightInner;
