@@ -81,29 +81,19 @@ struct Mixer {
 struct Module {
     enum ModuleType tag;
     union {
-        struct Oscillator osc;
-        struct Envelope env;
-        struct Amplifier amp;
-        struct Distortion dist;
-        struct Attenuator attr;
-        struct Mixer mixer;
-    } module;
+        struct Oscillator *osc;
+        struct Envelope *env;
+        struct Amplifier *amp;
+        struct Distortion *dist;
+        struct Attenuator *attr;
+        struct Mixer *mixer;
+    } ptr;
 };
 
 struct Synth {
     struct NoteInput *input;
-    struct Oscillator *oscs[LIST_BUF_SIZE];
-    struct Envelope *envs[LIST_BUF_SIZE];
-    struct Amplifier *amps[LIST_BUF_SIZE];
-    struct Attenuator *attrs[LIST_BUF_SIZE];
-    struct Mixer *mixers[LIST_BUF_SIZE];
-    struct Distortion *distortions[LIST_BUF_SIZE];
-    int oscsLen;
-    int envsLen;
-    int ampsLen;
-    int attrsLen;
-    int mixersLen;
-    int distortionsLen;
+    struct Module modules[LIST_BUF_SIZE];
+    int modulesLen;
     int16_t *outPtr;
     struct Scope *scope;
 };

@@ -11,12 +11,7 @@
 int keyNum = 49;
 
 void synthInit(struct Synth *synth) {
-    synth->oscsLen = 0;
-    synth->envsLen = 0;
-    synth->ampsLen = 0;
-    synth->attrsLen = 0;
-    synth->mixersLen = 0;
-    synth->distortionsLen = 0;
+    synth->modulesLen = 0;
 }
 
 static void mixerRun(struct Mixer *mixer) {
@@ -32,8 +27,9 @@ void synthAddmixer(struct Synth *synth, struct Mixer *mixer, int16_t *samplesIn[
     mixer->samplesIn = samplesIn;
     mixer->out = INT16_MIN;
 
-    synth->mixers[synth->mixersLen] = mixer;
-    ++synth->mixersLen;
+    synth->modules[synth->modulesLen].tag = MIXER;
+    synth->modules[synth->modulesLen].ptr.mixer = mixer;
+    ++synth->modulesLen;
 }
 
 void synthAddDistortion(struct Synth *synth, struct Distortion *distortion, int16_t *sampleIn, double *slope) {
@@ -41,8 +37,9 @@ void synthAddDistortion(struct Synth *synth, struct Distortion *distortion, int1
     distortion->slope = slope;
     distortion->out = INT16_MIN;
 
-    synth->distortions[synth->distortionsLen] = distortion;
-    ++synth->distortionsLen;
+    synth->modules[synth->modulesLen].tag = DIST;
+    synth->modules[synth->modulesLen].ptr.dist = distortion;
+    ++synth->modulesLen;
 }
 
 static void distortionRun(struct Distortion *distortion) {
@@ -121,8 +118,9 @@ void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, e
     osc->t = 0;
     osc->out = INT16_MIN;
 
-    synth->oscs[synth->oscsLen] = osc;
-    ++synth->oscsLen;
+    synth->modules[synth->modulesLen].tag = OSC;
+    synth->modules[synth->modulesLen].ptr.osc= osc;
+    ++synth->modulesLen;
 }
 
 static void ampRun(struct Amplifier *amp) {
@@ -142,8 +140,9 @@ void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, 
     amp->gain = gain;
     amp->out = INT16_MIN;
 
-    synth->amps[synth->ampsLen] = amp;
-    ++synth->ampsLen;
+    synth->modules[synth->modulesLen].tag = AMP;
+    synth->modules[synth->modulesLen].ptr.amp = amp;
+    ++synth->modulesLen;
 }
 
 static void attrRun(struct Attenuator *attr) {
@@ -155,8 +154,9 @@ void synthAddAttr(struct Synth *synth, struct Attenuator *attr, int16_t *sampleI
     attr->amount = gainSample;
     attr->out = INT16_MIN;
 
-    synth->attrs[synth->attrsLen] = attr;
-    ++synth->attrsLen;
+    synth->modules[synth->modulesLen].tag = ATTR;
+    synth->modules[synth->modulesLen].ptr.attr = attr;
+    ++synth->modulesLen;
 }
 
 static void envRun(struct Envelope *env) {
@@ -216,28 +216,52 @@ void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *
     //env->releaseSample = 0;
     env->out = INT16_MIN;
 
-    synth->envs[synth->envsLen] = env;
-    ++synth->envsLen;
+    synth->modules[synth->modulesLen].tag = ENV;
+    synth->modules[synth->modulesLen].ptr.env = env;
+    ++synth->modulesLen;
 }
 
 void synthRun(struct Synth *synth) {
-    for (int i = 0; i < synth->oscsLen; i++) {
-        oscRun(synth->oscs[i]);
-    }
-    for (int i = 0; i < synth->envsLen; i++) {
-        envRun(synth->envs[i]);
-    }
-    for (int i = 0; i < synth->attrsLen; i++) {
-        attrRun(synth->attrs[i]);
-    }
-    for (int i = 0; i < synth->mixersLen; i++) {
-        mixerRun(synth->mixers[i]);
-    }
-    for (int i = 0; i < synth->ampsLen; i++) {
-        ampRun(synth->amps[i]);
-    }
-    for (int i = 0; i < synth->distortionsLen; i++) {
-        distortionRun(synth->distortions[i]);
+    //for (int i = 0; i < synth->oscsLen; i++) {
+    //    oscRun(synth->oscs[i]);
+    //}
+    //for (int i = 0; i < synth->envsLen; i++) {
+    //    envRun(synth->envs[i]);
+    //}
+    //for (int i = 0; i < synth->attrsLen; i++) {
+    //    attrRun(synth->attrs[i]);
+    //}
+    //for (int i = 0; i < synth->mixersLen; i++) {
+    //    mixerRun(synth->mixers[i]);
+    //}
+    //for (int i = 0; i < synth->ampsLen; i++) {
+    //    ampRun(synth->amps[i]);
+    //}
+    //for (int i = 0; i < synth->distortionsLen; i++) {
+    //    distortionRun(synth->distortions[i]);
+    //}
+    for (int i = 0; i < synth->modulesLen; i++) {
+        struct Module curModule = synth->modules[i];
+        switch (curModule.tag) {
+        case OSC:
+            oscRun(curModule.ptr.osc);
+            break;
+        case ENV:
+            envRun(curModule.ptr.env);
+            break;
+        case AMP:
+            ampRun(curModule.ptr.amp);
+            break;
+        case DIST:
+            distortionRun(curModule.ptr.dist);
+            break;
+        case ATTR:
+            attrRun(curModule.ptr.attr);
+            break;
+        case MIXER:
+            mixerRun(curModule.ptr.mixer);
+            break;
+        }
     }
     tuiDrawScope(synth->scope);
 }
