@@ -106,7 +106,7 @@ void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, e
 void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, double *gain);
 void synthAddAttr(struct Synth *synth, struct Attenuator *attr, int16_t *sampleIn, int16_t *gainSample);
 void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *attackPtr, double *decayPtr, double *sustainPtr, double *releasePtr);
-void synthAddDistortion(struct Synth *synth, struct Distortion *distortion, int16_t *sampleIn, double *slope);
+void synthAddDist(struct Synth *synth, struct Distortion *dist, int16_t *sampleIn, double *slope);
 
 double sampleToFreq(int16_t sample);
 int16_t freqToSample(double freq);

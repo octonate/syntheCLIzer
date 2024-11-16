@@ -84,7 +84,7 @@ int main() {
     //synthAddmixer(&synth, &mixer, (int16_t *[]) {&osc1.out, NULL});
 
     struct Distortion distortion;
-    synthAddDistortion(&synth, &distortion, &mixer.out, &drive.val);
+    synthAddDist(&synth, &distortion, &mixer.out, &drive.val);
 
     struct Envelope env1;
     synthAddEnv(&synth, &env1, &input1.gate, &attack.val, &decay.val, &sustain.val, &release.val);

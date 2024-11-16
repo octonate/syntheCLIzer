@@ -32,13 +32,13 @@ void synthAddmixer(struct Synth *synth, struct Mixer *mixer, int16_t *samplesIn[
     ++synth->modulesLen;
 }
 
-void synthAddDistortion(struct Synth *synth, struct Distortion *distortion, int16_t *sampleIn, double *slope) {
-    distortion->sampleIn = sampleIn;
-    distortion->slope = slope;
-    distortion->out = INT16_MIN;
+void synthAddDist(struct Synth *synth, struct Distortion *dist, int16_t *sampleIn, double *slope) {
+    dist->sampleIn = sampleIn;
+    dist->slope = slope;
+    dist->out = INT16_MIN;
 
     synth->modules[synth->modulesLen].tag = DIST;
-    synth->modules[synth->modulesLen].ptr.dist = distortion;
+    synth->modules[synth->modulesLen].ptr.dist = dist;
     ++synth->modulesLen;
 }
 
@@ -222,24 +222,6 @@ void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *
 }
 
 void synthRun(struct Synth *synth) {
-    //for (int i = 0; i < synth->oscsLen; i++) {
-    //    oscRun(synth->oscs[i]);
-    //}
-    //for (int i = 0; i < synth->envsLen; i++) {
-    //    envRun(synth->envs[i]);
-    //}
-    //for (int i = 0; i < synth->attrsLen; i++) {
-    //    attrRun(synth->attrs[i]);
-    //}
-    //for (int i = 0; i < synth->mixersLen; i++) {
-    //    mixerRun(synth->mixers[i]);
-    //}
-    //for (int i = 0; i < synth->ampsLen; i++) {
-    //    ampRun(synth->amps[i]);
-    //}
-    //for (int i = 0; i < synth->distortionsLen; i++) {
-    //    distortionRun(synth->distortions[i]);
-    //}
     for (int i = 0; i < synth->modulesLen; i++) {
         struct Module curModule = synth->modules[i];
         switch (curModule.tag) {
