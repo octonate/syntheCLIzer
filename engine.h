@@ -12,6 +12,15 @@
 
 extern int keyNum;
 
+enum ModuleType {
+    OSC,
+    ENV,
+    AMP,
+    DIST,
+    ATTR,
+    MIXER
+};
+
 enum Waveform {
     WAV_SINE,
     WAV_SQUARE,
@@ -23,6 +32,7 @@ struct NoteInput {
     int16_t val;
     bool gate;
 };
+
 
 struct Oscillator {
     int16_t *freqSample;
@@ -66,6 +76,18 @@ struct Attenuator {
 struct Mixer {
     int16_t **samplesIn;
     int16_t out;
+};
+
+struct Module {
+    enum ModuleType tag;
+    union {
+        struct Oscillator osc;
+        struct Envelope env;
+        struct Amplifier amp;
+        struct Distortion dist;
+        struct Attenuator attr;
+        struct Mixer mixer;
+    } module;
 };
 
 struct Synth {
