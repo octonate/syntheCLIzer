@@ -34,7 +34,7 @@ static void setKeyRepeatRate(enum ElementType elementType) {
 }
 static void boxDrawOutline(struct Box *box);
 
-void tuiAddScope(struct Scope *scope, int16_t *in, double *triggerVal, int x, int y, int width, int height, int horScale) {
+void tuiAddScope(struct Scope *scope, int16_t *in, int x, int y, int width, int height, int horScale, double *triggerVal, enum ScopeTriggerMode trigMode) {
     scope->in = in;
     scope->triggerVal = triggerVal;
     scope->x = x;
@@ -42,6 +42,7 @@ void tuiAddScope(struct Scope *scope, int16_t *in, double *triggerVal, int x, in
     scope->width = width;
     scope->height = height;
     scope->horScale = horScale;
+    scope->trigMode = trigMode;
 
     scope->t = 0;
     scope->xPos = 0;

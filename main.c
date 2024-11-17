@@ -99,7 +99,7 @@ int main() {
     struct Box triggerBox;
     tuiAddBox(&tui, &triggerBox, 45, 20, 3, 7, "trig", DOUBLE);
     struct Slider trigSlider;
-    boxAddSlider(&triggerBox, &trigSlider, 1, 1, 4, 0, INT16_MAX, 'T');
+    boxAddSlider(&triggerBox, &trigSlider, 1, 1, 4, 0, 10000, 'T');
 
     struct Scope scope;
     tuiAddScope(&scope, &attr.out, &trigSlider.val, 50, 10, 90, 50, 10);
@@ -125,7 +125,6 @@ int main() {
 
     while (!quit) {
         struct Box *focBox = tui.boxes[tui.focBoxIdx];
-        printf("%f", *scope.triggerVal);
 
         curKey = getchar();
         switch (curKey) {

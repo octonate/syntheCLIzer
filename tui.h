@@ -21,6 +21,10 @@
 
 #define MAX_RADIO_BUTTONS 8
 
+enum ScopeTriggerMode {
+    TRIG_RISING_EDGE,
+    TRIG_FALLING_EDGE,
+};
 
 enum ColorFG {
     CLR_K,
@@ -138,16 +142,17 @@ struct Radios {
 };
 
 struct Scope {
+    int16_t *in;
+    double *triggerVal;
     int x;
     int y;
     int width;
     int height;
     int horScale;
     int xPos;
+    enum ScopeTriggerMode trigMode;
     int16_t prevIn;
     int16_t t;
-    double *triggerVal;
-    int16_t *in;
     bool canTrigger;
 };
 
@@ -190,7 +195,7 @@ extern const char *clrsFG[];
 extern const char *clrsBG[];
 extern const char *outlineChars[STYLE_COUNT][BOX_CHAR_COUNT];
 
-void tuiAddScope(struct Scope *scope, int16_t *in, double *triggerVal, int x, int y, int width, int height, int horScale);
+void tuiAddScope(struct Scope *scope, int16_t *in, int x, int y, int width, int height, int horScale, double *triggerVal, enum ScopeTriggerMode trigMode);
 void tuiDrawScope(struct Scope *scope);
 
 void tuiInit(struct Tui *tui, char *label);
