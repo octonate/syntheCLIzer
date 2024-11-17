@@ -13,12 +13,12 @@
 extern int keyNum;
 
 enum ModuleType {
-    OSC,
-    ENV,
-    AMP,
-    DIST,
-    ATTR,
-    MIXER
+    MODULE_OSC,
+    MODULE_ENV,
+    MODULE_AMP,
+    MODULE_DIST,
+    MODULE_ATTR,
+    MODULE_MIXER
 };
 
 enum Waveform {

@@ -90,7 +90,7 @@ int main() {
     synthAddEnv(&synth, &env1, &input1.gate, &attack.val, &decay.val, &sustain.val, &release.val);
 
     struct Attenuator attr;
-    synthAddAttr(&synth, &attr, &distortion.out, &env1.out);
+    synthAddAttr(&synth, &attr, &mixer.out, &env1.out);
 
     synth.input = &input1;
 
@@ -102,7 +102,7 @@ int main() {
     boxAddSlider(&triggerBox, &trigSlider, 1, 1, 4, 0, 10000, 'T');
 
     struct Scope scope;
-    tuiAddScope(&scope, &attr.out, 50, 10, 90, 50, 10, &trigSlider.val, TRIG_RISING_EDGE);
+    tuiAddScope(&scope, &attr.out, 50, 10, 20, 10, 30, &trigSlider.val, TRIG_RISING_EDGE);
     synth.scope = &scope;
 
     bool quit = false;
