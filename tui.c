@@ -61,11 +61,19 @@ void tuiAddScope(struct Scope *scope, int16_t *in, int x, int y, int width, int 
     boxDrawOutline(&scopeBox);
 }
 
-static bool scopeTriggerRising(int16_t curIn, int16_t prevIn, double triggerVal) {
-    if (prevIn > curIn && curIn > triggerVal)
-        return true; 
-    else
-        return false;
+static bool scopeWillTrigger(int16_t curIn, int16_t prevIn, double triggerVal, enum ScopeTriggerMode trigMode) {
+    bool out = false;
+
+    switch (trigMode) {
+    case TRIG_RISING_EDGE:
+        if (prevIn > curIn && curIn > triggerVal) out = true;
+        break;
+    case TRIG_FALLING_EDGE:
+        if (prevIn < curIn && curIn < triggerVal) out = true;
+        break;
+    }
+
+    return out;
 }
 
 void tuiDrawScope(struct Scope *scope) {
@@ -79,21 +87,11 @@ void tuiDrawScope(struct Scope *scope) {
     if (scope->xPos >= widthInner && scope->prevIn < *scope->in) {
         scope->canTrigger = true;
     }
-    if (scope->canTrigger) {
-        bool trigTime;
-        switch (scope->trigMode) {
-        case TRIG_RISING_EDGE:
-            trigTime= scopeTriggerRising(*scope->in, scope->prevIn, *scope->triggerVal);
-            break;
-        case TRIG_FALLING_EDGE:
-            break;
-        }
 
-        if (trigTime) {
-            scope->xPos = 0;
-            scope->t = 0;
-            scope->canTrigger = false;
-        }
+    if (scope->canTrigger && scopeWillTrigger(*scope->in, scope->prevIn, *scope->triggerVal, scope->trigMode)) {
+        scope->xPos = 0;
+        scope->t = 0;
+        scope->canTrigger = false;
     }
 
     if (scope->xPos >= widthInner) {
