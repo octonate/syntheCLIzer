@@ -372,27 +372,27 @@ static void boxDrawOutline(struct Box *box) {
     printf("%s", TEXT_RESET);
     printf("%s", box->isFoc ? clrsFG[CLR_BR_W] : clrsFG[CLR_BR_K]);
 
-    printf("%s", outlineChars[box->style][UPPER_LEFT_CORNER]);
+    printf("%s", outlineChars[box->style][OUTLINE_UPPER_LEFT_CORNER]);
     printf("%.*s", labelLen, box->label);
     for (int i = 0; i < box->width - labelLen - 2; i++) {
-        printf("%s", outlineChars[box->style][HOR_LINE]);
+        printf("%s", outlineChars[box->style][OUTLINE_HOR_LINE]);
     }
-    printf("%s\b", outlineChars[box->style][UPPER_RIGHT_CORNER]);
+    printf("%s\b", outlineChars[box->style][OUTLINE_UPPER_RIGHT_CORNER]);
 
     SET_CURSOR_POS(box->x, box->y + 1);
 
     for (int i = 0; i < box->height - 2; i++) {
-        printf("%s", outlineChars[box->style][VERT_LINE]);
+        printf("%s", outlineChars[box->style][OUTLINE_VERT_LINE]);
         MOVE_CURSOR_RIGHT(box->width - 2);
-        printf("%s", outlineChars[box->style][VERT_LINE]);
+        printf("%s", outlineChars[box->style][OUTLINE_VERT_LINE]);
         MOVE_CURSOR_LEFT(box->width);
         printf("%s", CURSOR_DOWN);
     }
-    printf("%s", outlineChars[box->style][LOWER_LEFT_CORNER]);
+    printf("%s", outlineChars[box->style][OUTLINE_LOWER_LEFT_CORNER]);
     for (int i = 0; i < box->width - 2; i++) {
-        printf("%s", outlineChars[box->style][HOR_LINE]);
+        printf("%s", outlineChars[box->style][OUTLINE_HOR_LINE]);
     }
-    printf("%s\b", outlineChars[box->style][LOWER_RIGHT_CORNER]);
+    printf("%s\b", outlineChars[box->style][OUTLINE_LOWER_RIGHT_CORNER]);
 
     SET_CURSOR_POS(box->x, box->y);
 
