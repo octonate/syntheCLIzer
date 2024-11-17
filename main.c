@@ -102,7 +102,7 @@ int main() {
     boxAddSlider(&triggerBox, &trigSlider, 1, 1, 4, 0, 10000, 'T');
 
     struct Scope scope;
-    tuiAddScope(&scope, &attr.out, &trigSlider.val, 50, 10, 90, 50, 10);
+    tuiAddScope(&scope, &attr.out, 50, 10, 90, 50, 10, &trigSlider.val, TRIG_RISING_EDGE);
     synth.scope = &scope;
 
     bool quit = false;
