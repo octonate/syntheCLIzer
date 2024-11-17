@@ -97,8 +97,8 @@ void tuiDrawScope(struct Scope *scope) {
     if (scope->t % scope->horScale != 0) return;
 
     printf("%s", TEXT_RESET);
-    int curY = (double) (*scope->in + INT16_MAX) / (INT16_MAX - INT16_MIN) * heightInner;
-    int prevY = (double) (scope->prevIn + INT16_MAX) / (INT16_MAX - INT16_MIN) * heightInner;
+    int curY = heightInner - (double) (*scope->in + INT16_MAX) / (INT16_MAX - INT16_MIN) * heightInner;
+    int prevY = heightInner - (double) (scope->prevIn + INT16_MAX) / (INT16_MAX - INT16_MIN) * heightInner;
 
     SET_CURSOR_POS(xInner + scope->xPos, yInner);
     for (int i = 0; i < heightInner; i++) {
