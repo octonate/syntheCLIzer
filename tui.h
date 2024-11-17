@@ -96,7 +96,7 @@ enum OutlineChar {
     LOWER_LEFT_CORNER,
     LOWER_RIGHT_CORNER,
 
-    BOX_CHAR_COUNT
+    OUTLINE_CHAR_COUNT
 };
 
 enum ElementType {
@@ -193,7 +193,7 @@ extern const char *barsHor[];
 
 extern const char *clrsFG[];
 extern const char *clrsBG[];
-extern const char *outlineChars[OUTLINE_STYLE_COUNT][BOX_CHAR_COUNT];
+extern const char *outlineChars[OUTLINE_STYLE_COUNT][OUTLINE_CHAR_COUNT];
 
 void tuiAddScope(struct Scope *scope, int16_t *in, int x, int y, int width, int height, int horScale, double *triggerVal, enum ScopeTriggerMode trigMode);
 void tuiDrawScope(struct Scope *scope);
