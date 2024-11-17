@@ -56,7 +56,7 @@ void tuiAddScope(struct Scope *scope, int16_t *in, int x, int y, int width, int 
         .height = height,
         .isFoc = false,
         .label = "",
-        .style = THIN,
+        .style = OUTLINE_THIN,
     };
     boxDrawOutline(&scopeBox);
 }

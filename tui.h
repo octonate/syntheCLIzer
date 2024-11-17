@@ -80,12 +80,12 @@ enum ColorBG {
 };
 
 enum OutlineStyle {
-    THIN,
-    THICK,
-    ROUND,
-    DOUBLE,
+    OUTLINE_THIN,
+    OUTLINE_THICK,
+    OUTLINE_ROUND,
+    OUTLINE_DOUBLE,
 
-    STYLE_COUNT
+    OUTLINE_STYLE_COUNT
 };
 
 enum OutlineChar {
@@ -193,7 +193,7 @@ extern const char *barsHor[];
 
 extern const char *clrsFG[];
 extern const char *clrsBG[];
-extern const char *outlineChars[STYLE_COUNT][BOX_CHAR_COUNT];
+extern const char *outlineChars[OUTLINE_STYLE_COUNT][BOX_CHAR_COUNT];
 
 void tuiAddScope(struct Scope *scope, int16_t *in, int x, int y, int width, int height, int horScale, double *triggerVal, enum ScopeTriggerMode trigMode);
 void tuiDrawScope(struct Scope *scope);

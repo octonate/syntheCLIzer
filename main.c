@@ -24,10 +24,10 @@ int main() {
     tuiInit(&tui, "3xOsc");
 
     struct Box oscBox1, oscBox2, oscBox3, env;
-    tuiAddBox(&tui, &oscBox1, 10, 10, 16, 7, "osc1", THIN);
-    tuiAddBox(&tui, &oscBox2, 10, 20, 16, 7, "osc2", THIN);
-    tuiAddBox(&tui, &oscBox3, 10, 30, 16, 7, "osc3", THIN);
-    tuiAddBox(&tui, &env, 30, 10, 9, 7, "env", THIN);
+    tuiAddBox(&tui, &oscBox1, 10, 10, 16, 7, "osc1", OUTLINE_THIN);
+    tuiAddBox(&tui, &oscBox2, 10, 20, 16, 7, "osc2", OUTLINE_THIN);
+    tuiAddBox(&tui, &oscBox3, 10, 30, 16, 7, "osc3", OUTLINE_THIN);
+    tuiAddBox(&tui, &env, 30, 10, 9, 7, "env", OUTLINE_THIN);
 
     struct Radios shape1, shape2, shape3;
     boxAddRadios(&oscBox1, &shape1, 1, 1, "shape");
@@ -97,7 +97,7 @@ int main() {
     synth.outPtr = &attr.out;
 
     struct Box triggerBox;
-    tuiAddBox(&tui, &triggerBox, 45, 20, 3, 7, "trig", DOUBLE);
+    tuiAddBox(&tui, &triggerBox, 45, 20, 3, 7, "trig", OUTLINE_DOUBLE);
     struct Slider trigSlider;
     boxAddSlider(&triggerBox, &trigSlider, 1, 1, 4, 0, 10000, 'T');
 
