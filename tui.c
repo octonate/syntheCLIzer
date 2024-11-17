@@ -22,12 +22,12 @@ static void resetKeyRepeatRate() {
 
 static void setKeyRepeatRate(enum ElementType elementType) {
     switch (elementType) {
-    case SLIDER:
+    case ELEMENT_SLIDER:
         system("xset r rate 25");
         system("xset -r 43");
         system("xset -r 30");
         break;
-    case RADIOS:
+    case ELEMENT_RADIOS:
         resetKeyRepeatRate();
         break;
     }
@@ -142,13 +142,13 @@ void boxAddRadios(struct Box *box, struct Radios *radios, int x, int y, char *la
 
     if (box->elementsLen == 0  && box->isFoc) {
         radios->isFoc = true;
-        setKeyRepeatRate(RADIOS);
+        setKeyRepeatRate(ELEMENT_RADIOS);
     } else {
         radios->isFoc = false;
     }
     
     box->elements[box->elementsLen].ptr.radios = radios;
-    box->elements[box->elementsLen].type = RADIOS;
+    box->elements[box->elementsLen].type = ELEMENT_RADIOS;
     ++box->elementsLen;
 }
 
@@ -250,11 +250,11 @@ void radiosAddButton(struct Radios *radios, char *name, int val) {
 
 static void elementDraw(struct Element element) {
     switch (element.type) {
-    case SLIDER:
+    case ELEMENT_SLIDER:
         element.ptr.slider->isFoc = element.isFoc;
         sliderDraw(element.ptr.slider);
         break;
-    case RADIOS:
+    case ELEMENT_RADIOS:
         element.ptr.radios->isFoc = element.isFoc;
         radiosDraw(element.ptr.radios);
         break;
@@ -283,13 +283,13 @@ void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int heig
     if (box->elementsLen == 0) {
         box->elements[box->elementsLen].isFoc = true;
         slider->isFoc = true;
-        setKeyRepeatRate(SLIDER);
+        setKeyRepeatRate(ELEMENT_SLIDER);
     } else {
         box->elements[0].isFoc = false;
     }
 
     box->elements[box->elementsLen].ptr.slider = slider;
-    box->elements[box->elementsLen].type = SLIDER;
+    box->elements[box->elementsLen].type = ELEMENT_SLIDER;
     elementDraw(box->elements[box->elementsLen]);
 
     ++box->elementsLen;
@@ -300,10 +300,10 @@ void boxIncrFocElement(struct Box *box) {
     if (box->elementsLen == 0) return;
     struct Element curElement = box->elements[box->focElementIdx];
     switch (curElement.type) {
-    case SLIDER:
+    case ELEMENT_SLIDER:
         sliderIncr(curElement.ptr.slider, 1);
         break;
-    case RADIOS:
+    case ELEMENT_RADIOS:
         radiosSelectButtonUp(curElement.ptr.radios);
         break;
     }
@@ -314,10 +314,10 @@ void boxDecrFocElement(struct Box *box) {
     if (box->elementsLen == 0) return;
     struct Element curElement = box->elements[box->focElementIdx];
     switch (curElement.type) {
-    case SLIDER:
+    case ELEMENT_SLIDER:
         sliderIncr(curElement.ptr.slider, -1);
         break;
-    case RADIOS:
+    case ELEMENT_RADIOS:
         radiosSelectButtonDown(curElement.ptr.radios);
         break;
     }

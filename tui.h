@@ -100,8 +100,8 @@ enum OutlineChar {
 };
 
 enum ElementType {
-    SLIDER,
-    RADIOS,
+    ELEMENT_SLIDER,
+    ELEMENT_RADIOS,
 };
 
 struct ColorInfo {
