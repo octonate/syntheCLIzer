@@ -10,20 +10,15 @@ all: $(OBJDIR) synth
 synth: $(addprefix $(OBJDIR)/, $(OBJECTS))
 	$(CC) $(LDLIBS) $^ -o synth
 
-$(OBJDIR)/main.o: main.c tui.h engine.h common.h
+$(OBJDIR)/main.o: tui.h engine.h common.h
+$(OBJDIR)/tui.o: tui.h
+$(OBJDIR)/engine.o: engine.h common.h
+$(OBJDIR)/arrays.o: tui.h
+$(OBJDIR)/callback.o: engine.h tui.h callback.h
+
+$(OBJDIR)/%.o: %.c
 	$(CC) $(CFLAGS) $(LDLIBS) -c $< -o $@
 
-$(OBJDIR)/tui.o: tui.c tui.h
-	$(CC) $(CFLAGS) $(LDLIBS) -c $< -o $@
-
-$(OBJDIR)/engine.o: engine.c engine.h common.h
-	$(CC) $(CFLAGS) $(LDLIBS) -c $< -o $@
-
-$(OBJDIR)/arrays.o: arrays.c tui.h
-	$(CC) $(CFLAGS) $(LDLIBS) -c $< -o $@
-
-$(OBJDIR)/callback.o: callback.c engine.h tui.h callback.h
-	$(CC) $(CFLAGS) $(LDLIBS) -c $< -o $@
 
 $(OBJDIR): 
 	mkdir $(OBJDIR)
