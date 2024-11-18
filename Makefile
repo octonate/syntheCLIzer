@@ -1,22 +1,24 @@
 CFLAGS = -Wall -pedantic -Wextra -Wold-style-declaration -Wno-unused-parameter -std=c99
 LDLIBS = -lm -lSDL2
 CC = gcc
-
 OBJDIR = obj
+
+VPATH = $(OBJDIR)
 OBJECTS = main.o engine.o tui.o arrays.o callback.o
 
-all: $(OBJDIR) synth
+all: synth | $(OBJDIR)
+	-mv *.o $(OBJDIR)
 
-synth: $(addprefix $(OBJDIR)/, $(OBJECTS))
+synth: $(OBJECTS)
 	$(CC) $(LDLIBS) $^ -o synth
 
-$(OBJDIR)/main.o: tui.h engine.h common.h
-$(OBJDIR)/tui.o: tui.h
-$(OBJDIR)/engine.o: engine.h common.h
-$(OBJDIR)/arrays.o: tui.h
-$(OBJDIR)/callback.o: engine.h tui.h callback.h
+main.o: tui.h engine.h common.h
+tui.o: tui.h
+engine.o: engine.h common.h
+arrays.o: tui.h
+callback.o: engine.h tui.h callback.h
 
-$(OBJDIR)/%.o: %.c
+%.o: %.c
 	$(CC) $(CFLAGS) $(LDLIBS) -c $< -o $@
 
 
@@ -27,3 +29,5 @@ clean:
 	rm $(OBJDIR)/*.o
 	rmdir $(OBJDIR)
 	rm synth
+
+.PHONY: all clean
