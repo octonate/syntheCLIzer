@@ -5,6 +5,7 @@
 #include <SDL2/SDL.h>
 #include "engine.h"
 #include "tui.h"
+#include "callback.h"
 
 SDL_AudioDeviceID audioDevice;
 SDL_AudioSpec audioSpec;
@@ -102,7 +103,7 @@ int main() {
     boxAddSlider(&triggerBox, &trigSlider, 1, 1, 4, 0, 10000, 'T');
 
     struct Scope scope;
-    tuiAddScope(&scope, &attr.out, 50, 10, 20, 10, 30, &trigSlider.val, TRIG_RISING_EDGE);
+    tuiAddScope(&scope, &attr.out, 50, 10, 90, 40, 20, &trigSlider.val, TRIG_RISING_EDGE);
     synth.scope = &scope;
 
     bool quit = false;
