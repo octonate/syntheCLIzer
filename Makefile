@@ -2,25 +2,25 @@ CFLAGS = -Wall -pedantic -Wextra -Wold-style-declaration -Wno-unused-parameter -
 LDLIBS = -lm -lSDL2
 CC = gcc
 OBJDIR = .obj
+BIN = synth
 
-VPATH = $(OBJDIR)
-OBJECTS = main.o engine.o tui.o arrays.o callback.o
-
-all: synth | $(OBJDIR)
+all: $(BIN)
 	-mv *.o $(OBJDIR)
 
-main.o: tui.h engine.h common.h
-tui.o: tui.h
+VPATH = $(OBJDIR)
+OBJS = main.o engine.o tui.o arrays.o callback.o
+
+main.o: tui.h engine.h common.h callback.h
 engine.o: engine.h common.h
+tui.o: tui.h
 arrays.o: tui.h
-callback.o: engine.h tui.h callback.h
+callback.o: callback.h
 
-synth: $(OBJECTS)
-	$(CC) $(LDLIBS) $^ -o synth
+$(BIN): $(OBJS)
+	$(CC) $(LDLIBS) $(CFLAGS) $^ -o $(BIN)
 
-%.o: %.c
-	$(CC) $(CFLAGS) $(LDLIBS) -c $< -o $@
-
+%.o: %.c | $(OBJDIR)
+	$(CC) $(LDLIBS) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR): 
 	mkdir $(OBJDIR)
@@ -28,6 +28,6 @@ $(OBJDIR):
 clean:
 	rm $(OBJDIR)/*.o
 	rmdir $(OBJDIR)
-	rm synth
+	rm $(BIN)
 
 .PHONY: all clean
