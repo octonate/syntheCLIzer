@@ -84,6 +84,7 @@ enum OutlineStyle {
     OUTLINE_THICK,
     OUTLINE_ROUND,
     OUTLINE_DOUBLE,
+    OUTLINE_ASCII,
 
     OUTLINE_STYLE_COUNT
 };

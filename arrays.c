@@ -10,6 +10,7 @@ const char *outlineChars[OUTLINE_STYLE_COUNT][OUTLINE_CHAR_COUNT] = {
     { "\u2501", "\u2503", "\u250f", "\u2513", "\u2517", "\u251b" }, 
     { "\u2500", "\u2502", "\u256d", "\u256e", "\u2570", "\u256f" }, 
     { "\u2550", "\u2551", "\u2554", "\u2557", "\u255a", "\u255d" }, 
+    { "-",      "|",      "+",      "+",      "+",      "+"      },
 };
 
 const char *clrsFG[] = {
