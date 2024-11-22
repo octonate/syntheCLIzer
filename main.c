@@ -54,6 +54,11 @@ int main() {
     boxAddSlider(&oscBox2, &detune2, 7, 1, 4, 0.9, 1.1, 'T');
     boxAddSlider(&oscBox3, &detune3, 7, 1, 4, 0.9, 1.1, 'T');
 
+    struct Slider phase1, phase2, phase3;
+    boxAddSlider(&oscBox1, &phase1, 9, 1, 4, -180, 180, 'P');
+    boxAddSlider(&oscBox2, &phase2, 9, 1, 4, -180, 180, 'P');
+    boxAddSlider(&oscBox3, &phase3, 9, 1, 4, -180, 180, 'P');
+
     struct Slider attack, decay, sustain, release, drive;
     boxAddSlider(&env, &attack, 1, 1, 4, 0, 1000, 'a');
     boxAddSlider(&env, &decay, 3, 1, 4, 0, 1000, 'd');
@@ -77,13 +82,13 @@ int main() {
     synthAddAmp(&synth, &detuner3, &input1.val, &detune3.val);
 
     struct Oscillator osc1, osc2, osc3;
-    synthAddOsc(&synth, &osc1, &detuner1.out, (enum Waveform *)&shape1.val);
-    synthAddOsc(&synth, &osc2, &detuner2.out, (enum Waveform *)&shape2.val);
-    synthAddOsc(&synth, &osc3, &detuner3.out, (enum Waveform *)&shape3.val);
+    synthAddOsc(&synth, &osc1, &detuner1.out, (enum Waveform *)&shape1.val, &phase1.val);
+    synthAddOsc(&synth, &osc2, &detuner2.out, (enum Waveform *)&shape2.val, &phase2.val);
+    synthAddOsc(&synth, &osc3, &detuner3.out, (enum Waveform *)&shape3.val, &phase3.val);
 
     struct Mixer mixer;
     synthAddmixer(&synth, &mixer, (int16_t *[]) {&osc1.out, &osc2.out, &osc3.out, NULL});
-    //synthAddmixer(&synth, &mixer, (int16_t *[]) {&osc1.out, NULL});
+    //synthAddmixer(&synth, &mixer, (int16_t *[]) {&osc1.out, &osc2.out, NULL});
 
     struct Distortion distortion;
     synthAddDist(&synth, &distortion, &mixer.out, &drive.val);
@@ -92,7 +97,7 @@ int main() {
     synthAddEnv(&synth, &env1, &input1.gate, &attack.val, &decay.val, &sustain.val, &release.val);
 
     struct Attenuator attr;
-    synthAddAttr(&synth, &attr, &mixer.out, &env1.out);
+    synthAddAttr(&synth, &attr, &distortion.out, &env1.out);
 
     synth.input = &input1;
 
@@ -104,10 +109,8 @@ int main() {
     boxAddSlider(&triggerBox, &trigSlider, 1, 1, 4, 0, 10000, 'T');
 
     struct Scope scope;
-    tuiAddScope(&scope, &attr.out, 50, 10, 100, 50, 4, &trigSlider.val, TRIG_RISING_EDGE);
+    tuiAddScope(&scope, synth.outPtr, 50, 10, 100, 50, 4, &trigSlider.val, TRIG_RISING_EDGE);
     synth.scope = &scope;
-
-    bool quit = false;
 
     struct Userdata callbackData;
     callbackData.synth = &synth;
@@ -129,44 +132,7 @@ int main() {
     SDL_PauseAudioDevice(audioDevice, 0);
 
 
-    while (1) {
-        callbackData.curChar = getchar();
-        if (callbackData.quit == true) break;
-        /*
-        switch (curKey) {
-        case '[':
-            input1.gate = true;
-            break;
-        case ']':
-            input1.gate = false;
-            break;
-        case 'q':
-            quit = true;
-            break;
-        case 'k':
-            boxIncrFocElement(tui.boxes[tui.focBoxIdx]);
-            break;
-        case 'j':
-            boxDecrFocElement(tui.boxes[tui.focBoxIdx]);
-            break;
-        case 'h':
-            boxPrevElement(tui.boxes[tui.focBoxIdx]);
-            break;
-        case 'l':
-            boxNextElement(tui.boxes[tui.focBoxIdx]);
-            break;
-        case 'H':
-            tuiPrevBox(&tui);
-            break;
-        case 'L':
-            tuiNextBox(&tui);
-            break;
-        default:
-            input1.gate = true;
-            input1.val = freqToSample(100 * pow(2, (double) (curKey - 48) / 12));
-        }
-        */
-    }
+    while ((callbackData.curChar = getchar()) != 'q') {}
 
     SDL_Delay(50);
 

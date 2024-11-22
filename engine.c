@@ -13,6 +13,11 @@ void synthInit(struct Synth *synth) {
     synth->modulesLen = 0;
 }
 
+static double fmodPos(double x, double y) {
+    double result = fmod(x, y);
+    return (result > 0 ? result : result + y);
+}
+
 static void mixerRun(struct Mixer *mixer) {
     double total = 0;
     int len;
@@ -85,35 +90,43 @@ static int16_t oscTri(double freq, uint16_t t) {
     return (int16_t) INT16_MAX * (4 * fmod((t < period / 2 ? t : -t), period) / period - 1);
 }
 
+
 static void oscRun(struct Oscillator *osc) {
     double freq = sampleToFreq(*osc->freqSample);
     double period = SAMPLE_RATE / freq;
     int16_t sample;
-
     if (osc->t > period) {
         osc->t = 0;
     }
+
+    uint16_t tOffset = osc->t;
+    if (osc->phaseOffset != NULL) {
+        tOffset += SAMPLE_RATE * fmodPos(*osc->phaseOffset, 360) / (360 * freq);
+        tOffset = tOffset % (int)period;
+    }
+
     switch (*osc->waveform) {
     case WAV_SINE:
-        sample = oscSine(freq, osc->t);
+        sample = oscSine(freq, tOffset);
         break;
     case WAV_SQUARE:
-        sample = oscSquare(freq, osc->t);
+        sample = oscSquare(freq, tOffset);
         break;
     case WAV_TRI:
-        sample = oscTri(freq, osc->t);
+        sample = oscTri(freq, tOffset);
         break;
     case WAV_SAW:
-        sample = oscSaw(freq, osc->t);
+        sample = oscSaw(freq, tOffset);
         break;
     }
     osc->t += 1;
     osc->out = sample;
 }
 
-void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, enum Waveform *waveform) {
+void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, enum Waveform *waveform, double *phaseOffset) {
     osc->freqSample = freqIn;
     osc->waveform = waveform;
+    osc->phaseOffset = phaseOffset;
     osc->t = 0;
     osc->out = INT16_MIN;
 
@@ -212,7 +225,6 @@ void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *
     *env->gate = false;
     env->t = 0;
     env->prevGate = false;
-    //env->releaseSample = 0;
     env->out = INT16_MIN;
 
     synth->modules[synth->modulesLen].tag = MODULE_ENV;
@@ -245,15 +257,3 @@ void synthRun(struct Synth *synth) {
         }
     }
 }
-
-//void audioCallback(void *userdata, uint8_t *stream, int len) {
-//    struct Synth *synth = (struct Synth*) userdata;
-//    int16_t *stream16 = (int16_t*) stream;
-//
-//    for (unsigned i = 0; i < len / sizeof (int16_t); i++) {
-//        synthRun(synth);
-//        stream16[i] = *synth->outPtr;
-//        tuiDrawScope(synth->scope);
-//    }
-//}
-
