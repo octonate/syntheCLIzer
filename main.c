@@ -10,6 +10,7 @@
 SDL_AudioDeviceID audioDevice;
 SDL_AudioSpec audioSpec;
 
+
 void goodbye() {
     SDL_CloseAudioDevice(audioDevice);
     SDL_Quit();
@@ -103,11 +104,15 @@ int main() {
     boxAddSlider(&triggerBox, &trigSlider, 1, 1, 4, 0, 10000, 'T');
 
     struct Scope scope;
-    tuiAddScope(&scope, &attr.out, 50, 10, 90, 40, 20, &trigSlider.val, TRIG_RISING_EDGE);
+    tuiAddScope(&scope, &attr.out, 50, 10, 100, 50, 4, &trigSlider.val, TRIG_RISING_EDGE);
     synth.scope = &scope;
 
     bool quit = false;
-    int curKey;
+
+    struct Userdata callbackData;
+    callbackData.synth = &synth;
+    callbackData.tui = &tui;
+
 
     SDL_Init(SDL_INIT_AUDIO);
 
@@ -117,17 +122,17 @@ int main() {
     audioSpec.channels = 1;
     audioSpec.samples = STREAM_BUF_SIZE;
     audioSpec.callback = &audioCallback;
-    audioSpec.userdata = &synth;
+    audioSpec.userdata = &callbackData;
 
 
     audioDevice = SDL_OpenAudioDevice(NULL, 0, &audioSpec, NULL, 0);
     SDL_PauseAudioDevice(audioDevice, 0);
 
 
-    while (!quit) {
-        struct Box *focBox = tui.boxes[tui.focBoxIdx];
-
-        curKey = getchar();
+    while (1) {
+        callbackData.curChar = getchar();
+        if (callbackData.quit == true) break;
+        /*
         switch (curKey) {
         case '[':
             input1.gate = true;
@@ -160,6 +165,7 @@ int main() {
             input1.gate = true;
             input1.val = freqToSample(100 * pow(2, (double) (curKey - 48) / 12));
         }
+        */
     }
 
     SDL_Delay(50);
