@@ -7,7 +7,7 @@
 #include "common.h"
 #include "engine.h"
 
-int keyNum = 49;
+uint64_t nextRand = 42;
 
 void synthInit(struct Synth *synth) {
     synth->modulesLen = 0;
@@ -90,6 +90,14 @@ static int16_t oscTri(double freq, uint16_t t) {
     return (int16_t) INT16_MAX * (4 * fmod((t < period / 2 ? t : -t), period) / period - 1);
 }
 
+void srandqd(int32_t seed) {
+    nextRand = seed;
+}
+
+static int16_t randqd(void) {
+    nextRand = 1664525 * nextRand + 1013904223;
+    return nextRand;
+}
 
 static void oscRun(struct Oscillator *osc) {
     double freq = sampleToFreq(*osc->freqSample);
@@ -102,7 +110,7 @@ static void oscRun(struct Oscillator *osc) {
     uint16_t tOffset = osc->t;
     if (osc->phaseOffset != NULL) {
         tOffset += SAMPLE_RATE * fmodPos(*osc->phaseOffset, 360) / (360 * freq);
-        tOffset = tOffset % (int)period;
+        tOffset = tOffset % (uint16_t) period;
     }
 
     switch (*osc->waveform) {
@@ -118,6 +126,8 @@ static void oscRun(struct Oscillator *osc) {
     case WAV_SAW:
         sample = oscSaw(freq, tOffset);
         break;
+    case WAV_NOISE:
+        sample = randqd();
     }
     osc->t += 1;
     osc->out = sample;

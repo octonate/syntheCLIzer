@@ -10,8 +10,6 @@
 #define STREAM_BUF_SIZE 1024
 #define MIDDLE_C_FREQ 261.63
 
-extern int keyNum;
-
 enum ModuleType {
     MODULE_OSC,
     MODULE_ENV,
@@ -25,7 +23,8 @@ enum Waveform {
     WAV_SINE,
     WAV_SQUARE,
     WAV_TRI,
-    WAV_SAW
+    WAV_SAW,
+    WAV_NOISE
 };
 
 struct NoteInput {
@@ -112,6 +111,8 @@ void synthAddDist(struct Synth *synth, struct Distortion *dist, int16_t *sampleI
 double sampleToFreq(int16_t sample);
 int16_t freqToSample(double freq);
 double sampleToDouble(int16_t sample, double rangeMin, double rangeMax);
+
+void srandqd(int32_t seed);
 
 void audioCallback(void *userdata, Uint8 *stream, int len);
 

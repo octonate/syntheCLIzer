@@ -21,6 +21,7 @@ void goodbye() {
 int main() {
     system("clear");
     hello();
+    srandqd(42);
 
     struct Tui tui;
     tuiInit(&tui, "3xOsc");
@@ -40,24 +41,29 @@ int main() {
     radiosAddButton(&shape1, "sqr", WAV_SQUARE);
     radiosAddButton(&shape1, "tri", WAV_TRI);
     radiosAddButton(&shape1, "saw", WAV_SAW);
+    radiosAddButton(&shape1, "noise", WAV_NOISE);
+
     radiosAddButton(&shape2, "sin", WAV_SINE);
     radiosAddButton(&shape2, "sqr", WAV_SQUARE);
     radiosAddButton(&shape2, "tri", WAV_TRI);
     radiosAddButton(&shape2, "saw", WAV_SAW);
+    radiosAddButton(&shape2, "noise", WAV_NOISE);
+
     radiosAddButton(&shape3, "sin", WAV_SINE);
     radiosAddButton(&shape3, "sqr", WAV_SQUARE);
     radiosAddButton(&shape3, "tri", WAV_TRI);
     radiosAddButton(&shape3, "saw", WAV_SAW);
+    radiosAddButton(&shape3, "noise", WAV_NOISE);
 
     struct Slider detune1, detune2, detune3;
-    boxAddSlider(&oscBox1, &detune1, 7, 1, 4, 0.9, 1.1, 'T');
-    boxAddSlider(&oscBox2, &detune2, 7, 1, 4, 0.9, 1.1, 'T');
-    boxAddSlider(&oscBox3, &detune3, 7, 1, 4, 0.9, 1.1, 'T');
+    boxAddSlider(&oscBox1, &detune1, 9, 1, 4, 0.9, 1.1, 'T');
+    boxAddSlider(&oscBox2, &detune2, 9, 1, 4, 0.9, 1.1, 'T');
+    boxAddSlider(&oscBox3, &detune3, 9, 1, 4, 0.9, 1.1, 'T');
 
     struct Slider phase1, phase2, phase3;
-    boxAddSlider(&oscBox1, &phase1, 9, 1, 4, -180, 180, 'P');
-    boxAddSlider(&oscBox2, &phase2, 9, 1, 4, -180, 180, 'P');
-    boxAddSlider(&oscBox3, &phase3, 9, 1, 4, -180, 180, 'P');
+    boxAddSlider(&oscBox1, &phase1, 11, 1, 4, -180, 180, 'P');
+    boxAddSlider(&oscBox2, &phase2, 11, 1, 4, -180, 180, 'P');
+    boxAddSlider(&oscBox3, &phase3, 11, 1, 4, -180, 180, 'P');
 
     struct Slider attack, decay, sustain, release, drive;
     boxAddSlider(&env, &attack, 1, 1, 4, 0, 1000, 'a');
