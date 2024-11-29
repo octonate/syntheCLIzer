@@ -4,9 +4,6 @@
 #include "common.h"
 #include "engine.h"
 
-#define KEYCODE_H 43
-#define KEYCODE_L 30
-
 #define TEXT_BOLD "\033[1m"
 #define TEXT_RESET "\033[0m"
 
