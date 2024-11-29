@@ -27,10 +27,10 @@ int main() {
     tuiInit(&tui, "3xOsc");
 
     struct Box oscBox1, oscBox2, oscBox3, env;
-    tuiAddBox(&tui, &oscBox1, 10, 10, 16, 7, "osc1", OUTLINE_THIN);
-    tuiAddBox(&tui, &oscBox2, 10, 20, 16, 7, "osc2", OUTLINE_THIN);
-    tuiAddBox(&tui, &oscBox3, 10, 30, 16, 7, "osc3", OUTLINE_THIN);
-    tuiAddBox(&tui, &env, 30, 10, 9, 7, "env", OUTLINE_THIN);
+    tuiAddBox(&tui, &oscBox1, 10, 10, 16, 8, "osc1", OUTLINE_THIN);
+    tuiAddBox(&tui, &oscBox2, 10, 20, 16, 8, "osc2", OUTLINE_THIN);
+    tuiAddBox(&tui, &oscBox3, 10, 30, 16, 8, "osc3", OUTLINE_THIN);
+    tuiAddBox(&tui, &env, 30, 10, 11, 7, "env", OUTLINE_THIN);
 
     struct Radios shape1, shape2, shape3;
     boxAddRadios(&oscBox1, &shape1, 1, 1, "shape");
@@ -56,14 +56,19 @@ int main() {
     radiosAddButton(&shape3, "noise", WAV_NOISE);
 
     struct Slider detune1, detune2, detune3;
-    boxAddSlider(&oscBox1, &detune1, 9, 1, 4, 0.9, 1.1, 'T');
-    boxAddSlider(&oscBox2, &detune2, 9, 1, 4, 0.9, 1.1, 'T');
-    boxAddSlider(&oscBox3, &detune3, 9, 1, 4, 0.9, 1.1, 'T');
+    boxAddSlider(&oscBox1, &detune1, 9, 1, 4, 0.98, 1.02, 'T');
+    boxAddSlider(&oscBox2, &detune2, 9, 1, 4, 0.98, 1.02, 'T');
+    boxAddSlider(&oscBox3, &detune3, 9, 1, 4, 0.98, 1.02, 'T');
 
     struct Slider phase1, phase2, phase3;
     boxAddSlider(&oscBox1, &phase1, 11, 1, 4, -180, 180, 'P');
     boxAddSlider(&oscBox2, &phase2, 11, 1, 4, -180, 180, 'P');
     boxAddSlider(&oscBox3, &phase3, 11, 1, 4, -180, 180, 'P');
+
+    struct Slider oscVol1, oscVol2, oscVol3;
+    boxAddSlider(&oscBox1, &oscVol1, 13, 1, 4, 0, 1, '^');
+    boxAddSlider(&oscBox2, &oscVol2, 13, 1, 4, 0, 1, '^');
+    boxAddSlider(&oscBox3, &oscVol3, 13, 1, 4, 0, 1, '^');
 
     struct Slider attack, decay, sustain, release, drive;
     boxAddSlider(&env, &attack, 1, 1, 4, 0, 1000, 'a');
@@ -71,7 +76,7 @@ int main() {
     boxAddSlider(&env, &sustain, 5, 1, 4, INT16_MIN, INT16_MAX, 's');
     boxAddSlider(&env, &release, 7, 1, 4, 0, 2000, 'r');
 
-    boxAddSlider(&env, &drive, 9, 1, 4, 0, 2, 'G');
+    boxAddSlider(&env, &drive, 9, 1, 4, 0, 10, 'G');
 
 
     struct NoteInput input1 = {
@@ -92,8 +97,13 @@ int main() {
     synthAddOsc(&synth, &osc2, &detuner2.out, (enum Waveform *)&shape2.val, &phase2.val);
     synthAddOsc(&synth, &osc3, &detuner3.out, (enum Waveform *)&shape3.val, &phase3.val);
 
+    struct Amplifier osc1Amp, osc2Amp, osc3Amp;
+    synthAddAmp(&synth, &osc1Amp, &osc1.out, &oscVol1.val);
+    synthAddAmp(&synth, &osc2Amp, &osc2.out, &oscVol2.val);
+    synthAddAmp(&synth, &osc3Amp, &osc3.out, &oscVol3.val);
+
     struct Mixer mixer;
-    synthAddmixer(&synth, &mixer, (int16_t *[]) {&osc1.out, &osc2.out, &osc3.out, NULL});
+    synthAddmixer(&synth, &mixer, (int16_t *[]) {&osc1Amp.out, &osc2Amp.out, &osc3Amp.out, NULL});
     //synthAddmixer(&synth, &mixer, (int16_t *[]) {&osc1.out, &osc2.out, NULL});
 
     struct Distortion distortion;
@@ -103,7 +113,7 @@ int main() {
     synthAddEnv(&synth, &env1, &input1.gate, &attack.val, &decay.val, &sustain.val, &release.val);
 
     struct Attenuator attr;
-    synthAddAttr(&synth, &attr, &distortion.out, &env1.out);
+    synthAddAttr(&synth, &attr, &mixer.out, &env1.out);
 
     synth.input = &input1;
 
