@@ -243,6 +243,39 @@ void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *
     ++synth->modulesLen;
 }
 
+void synthAddFilter(struct Synth *synth, struct Filter *filter, int16_t *sampleIn, double *impulseResponse, int filterLen) {
+    filter->sampleIn = sampleIn;
+    filter->impulseResponse = impulseResponse;
+    filter->filterLen = filterLen;
+
+    filter->samplesBufIdx = 0;
+
+    synth->modules[synth->modulesLen].tag = MODULE_FILTER;
+    synth->modules[synth->modulesLen].ptr.filter = filter;
+    ++synth->modulesLen;
+}
+
+void filterRun(struct Filter *filter) {
+    filter->samplesBuf[filter->samplesBufIdx] = *filter->sampleIn;
+
+    if (++filter->samplesBufIdx == filter->filterLen) {
+        filter->samplesBufIdx = 0;
+    }
+
+    double sampleOut = 0;
+    int sumIdx = filter->samplesBufIdx;
+
+    for (int i = 0; i < filter->filterLen; i++) {
+        if (--sumIdx < 0) {
+            sumIdx = filter->filterLen - 1;
+        }
+
+        sampleOut += (double) filter->samplesBuf[sumIdx] * filter->impulseResponse[i];
+    }
+
+    filter->out = sampleOut;
+}
+
 void synthRun(struct Synth *synth) {
     for (int i = 0; i < synth->modulesLen; i++) {
         struct Module curModule = synth->modules[i];
@@ -265,6 +298,10 @@ void synthRun(struct Synth *synth) {
         case MODULE_MIXER:
             mixerRun(curModule.ptr.mixer);
             break;
+        case MODULE_FILTER:
+            filterRun(curModule.ptr.filter);
+            break;
         }
     }
 }
+

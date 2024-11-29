@@ -16,7 +16,8 @@ enum ModuleType {
     MODULE_AMP,
     MODULE_DIST,
     MODULE_ATTR,
-    MODULE_MIXER
+    MODULE_MIXER,
+    MODULE_FILTER,
 };
 
 enum Waveform {
@@ -78,6 +79,15 @@ struct Mixer {
     int16_t out;
 };
 
+struct Filter {
+    int16_t samplesBuf[LIST_BUF_SIZE];
+    int16_t *sampleIn;
+    double *impulseResponse;
+    int filterLen;
+    int samplesBufIdx;
+    int16_t out;
+};
+
 struct Module {
     enum ModuleType tag;
     union {
@@ -87,6 +97,7 @@ struct Module {
         struct Distortion *dist;
         struct Attenuator *attr;
         struct Mixer *mixer;
+        struct Filter *filter;
     } ptr;
 };
 
@@ -107,6 +118,7 @@ void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, 
 void synthAddAttr(struct Synth *synth, struct Attenuator *attr, int16_t *sampleIn, int16_t *gainSample);
 void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *attackPtr, double *decayPtr, double *sustainPtr, double *releasePtr);
 void synthAddDist(struct Synth *synth, struct Distortion *dist, int16_t *sampleIn, double *slope);
+void synthAddFilter(struct Synth *synth, struct Filter *filter, int16_t *sampleIn, double *impulseResponse, int filterLen);
 
 double sampleToFreq(int16_t sample);
 int16_t freqToSample(double freq);
