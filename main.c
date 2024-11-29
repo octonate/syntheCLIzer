@@ -115,9 +115,14 @@ int main() {
     struct Attenuator attr;
     synthAddAttr(&synth, &attr, &mixer.out, &env1.out);
 
+    struct Box triggerBox;
+    tuiAddBox(&tui, &triggerBox, 45, 20, 5, 7, "trig", OUTLINE_DOUBLE);
+    struct Slider trigSlider, cutoffSlider;
+    boxAddSlider(&triggerBox, &trigSlider, 1, 1, 4, 0, 10000, 'T');
+    boxAddSlider(&triggerBox, &cutoffSlider, 3, 1, 4, 0, 10000, 'C');
+
     struct Filter filter;
-    double impulseResponse[] = {0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05};
-    synthAddFilter(&synth, &filter, &attr.out, impulseResponse, sizeof(impulseResponse) / sizeof(impulseResponse[0]));
+    synthAddFilter(&synth, &filter, FIR_LOWPASS, &attr.out, &env1.out, 427);
 
     synth.input = &input1;
 
@@ -126,10 +131,6 @@ int main() {
 
 
 
-    struct Box triggerBox;
-    tuiAddBox(&tui, &triggerBox, 45, 20, 3, 7, "trig", OUTLINE_DOUBLE);
-    struct Slider trigSlider;
-    boxAddSlider(&triggerBox, &trigSlider, 1, 1, 4, 0, 10000, 'T');
 
     struct Scope scope;
     tuiAddScope(&scope, synth.outPtr, 50, 10, 100, 50, 4, &trigSlider.val, TRIG_FALLING_EDGE);

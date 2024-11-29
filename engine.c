@@ -4,7 +4,6 @@
 #include <SDL2/SDL_audio.h>
 #include <SDL2/SDL.h>
 #include <err.h>
-#include "common.h"
 #include "engine.h"
 
 uint64_t nextRand = 42;
@@ -16,6 +15,10 @@ void synthInit(struct Synth *synth) {
 static double fmodPos(double x, double y) {
     double result = fmod(x, y);
     return (result > 0 ? result : result + y);
+}
+
+static double sinc(double x) {
+    return x == 0 ? 1 : sin(x) / x;
 }
 
 static void mixerRun(struct Mixer *mixer) {
@@ -128,6 +131,7 @@ static void oscRun(struct Oscillator *osc) {
         break;
     case WAV_NOISE:
         sample = randqd();
+        break;
     }
     osc->t += 1;
     osc->out = sample;
@@ -243,10 +247,11 @@ void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *
     ++synth->modulesLen;
 }
 
-void synthAddFilter(struct Synth *synth, struct Filter *filter, int16_t *sampleIn, double *impulseResponse, int filterLen) {
+void synthAddFilter(struct Synth *synth, struct Filter *filter, enum FilterType type, int16_t *sampleIn, int16_t *cutoff, int impulseLen) {
+    filter->type = type;
     filter->sampleIn = sampleIn;
-    filter->impulseResponse = impulseResponse;
-    filter->filterLen = filterLen;
+    filter->cutoff = cutoff;
+    filter->impulseLen = impulseLen;
 
     filter->samplesBufIdx = 0;
 
@@ -257,22 +262,35 @@ void synthAddFilter(struct Synth *synth, struct Filter *filter, int16_t *sampleI
 
 void filterRun(struct Filter *filter) {
     filter->samplesBuf[filter->samplesBufIdx] = *filter->sampleIn;
-
-    if (++filter->samplesBufIdx == filter->filterLen) {
+    if (++filter->samplesBufIdx == filter->impulseLen) {
         filter->samplesBufIdx = 0;
     }
+
+    //if (*filter->cutoff != filter->prevCutoff) {
+        double cutoffFreq = sampleToFreq(*filter->cutoff);
+        double responseSum = 0;
+
+        for (int i = 0; i < filter->impulseLen; i++) {
+            double nextImpulse = sinc(M_TAU * cutoffFreq / SAMPLE_RATE * ((double) i - (double) (filter->impulseLen) / 2));
+            filter->impulseResponse[i] = nextImpulse;
+            responseSum += nextImpulse;
+        }
+        for (int i = 0; i < filter->impulseLen; i++) {
+            filter->impulseResponse[i] /= responseSum;
+        }
+    //}
 
     double sampleOut = 0;
     int sumIdx = filter->samplesBufIdx;
 
-    for (int i = 0; i < filter->filterLen; i++) {
+    for (int i = 0; i < filter->impulseLen; i++) {
         if (--sumIdx < 0) {
-            sumIdx = filter->filterLen - 1;
+            sumIdx = filter->impulseLen - 1;
         }
-
         sampleOut += (double) filter->samplesBuf[sumIdx] * filter->impulseResponse[i];
     }
 
+    filter->prevCutoff = *filter->cutoff;
     filter->out = sampleOut;
 }
 

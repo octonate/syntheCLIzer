@@ -9,6 +9,7 @@
 #define SAMPLE_RATE 44100
 #define STREAM_BUF_SIZE 1024
 #define MIDDLE_C_FREQ 261.63
+#define FILTER_BUF_SIZE 500
 
 enum ModuleType {
     MODULE_OSC,
@@ -26,6 +27,14 @@ enum Waveform {
     WAV_TRI,
     WAV_SAW,
     WAV_NOISE
+};
+
+enum FilterType {
+    FIR_LOWPASS,
+    FIR_HIGHPASS,
+    FIR_BANDPASS,
+    FIR_NOTCH,
+    FIR_MOVING_AVERAGE,
 };
 
 struct NoteInput {
@@ -80,12 +89,15 @@ struct Mixer {
 };
 
 struct Filter {
-    int16_t samplesBuf[LIST_BUF_SIZE];
+    int16_t samplesBuf[FILTER_BUF_SIZE];
+    double impulseResponse[FILTER_BUF_SIZE];
     int16_t *sampleIn;
-    double *impulseResponse;
-    int filterLen;
+    int16_t *cutoff;
+    int16_t prevCutoff;
+    int impulseLen;
     int samplesBufIdx;
     int16_t out;
+    enum FilterType type;
 };
 
 struct Module {
@@ -118,7 +130,7 @@ void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, 
 void synthAddAttr(struct Synth *synth, struct Attenuator *attr, int16_t *sampleIn, int16_t *gainSample);
 void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *attackPtr, double *decayPtr, double *sustainPtr, double *releasePtr);
 void synthAddDist(struct Synth *synth, struct Distortion *dist, int16_t *sampleIn, double *slope);
-void synthAddFilter(struct Synth *synth, struct Filter *filter, int16_t *sampleIn, double *impulseResponse, int filterLen);
+void synthAddFilter(struct Synth *synth, struct Filter *filter, enum FilterType type, int16_t *sampleIn, int16_t *cutoff, int impulesLen);
 
 double sampleToFreq(int16_t sample);
 int16_t freqToSample(double freq);
