@@ -269,6 +269,12 @@ static void bartletWindow(double *impulseResponse, int impulseLen) {
     }
 }
 
+static void blackmanWindow(double *impulseResponse, int impulseLen) {
+    for (int i = 0; i < impulseLen; i++) {
+        impulseResponse[i] *= 0.42 - 0.5 * cos(M_TAU * i / (impulseLen - 1) + 0.08 * cos(2 * M_TAU * i / (impulseLen - 1)));
+    }
+}
+
 void synthAddFilter(struct Synth *synth, struct Filter *filter, enum firWindowType window, int16_t *sampleIn, int16_t *cutoff, int impulseLen) {
     filter->window = window;
     filter->sampleIn = sampleIn;
@@ -309,6 +315,9 @@ static void filterRun(struct Filter *filter) {
             break;
         case WINDOW_BARTLET:
             bartletWindow(filter->impulseResponse, filter->impulseLen);
+            break;
+        case WINDOW_BLACKMAN:
+            blackmanWindow(filter->impulseResponse, filter->impulseLen);
             break;
         }
 

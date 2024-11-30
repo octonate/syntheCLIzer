@@ -42,7 +42,7 @@ enum firWindowType {
     WINDOW_HAMMING,
     WINDOW_HANN,
     WINDOW_BARTLET,
-    //WINDOW_BLACKMAN,
+    WINDOW_BLACKMAN,
 };
 
 struct NoteInput {
