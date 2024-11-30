@@ -259,7 +259,7 @@ static void hammingWindow(double *impulseResponse, int impulseLen) {
     }
 }
 
-static void bartletWindow(double *impulseResponse, int impulseLen) {
+static void bartlettWindow(double *impulseResponse, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
         if (i < (impulseLen - 1) / 2) {
             impulseResponse[i] *= 2.0 * i / (impulseLen - 1);
@@ -313,8 +313,8 @@ static void filterRun(struct Filter *filter) {
         case WINDOW_HAMMING:
             hammingWindow(filter->impulseResponse, filter->impulseLen);
             break;
-        case WINDOW_BARTLET:
-            bartletWindow(filter->impulseResponse, filter->impulseLen);
+        case WINDOW_BARTLETT:
+            bartlettWindow(filter->impulseResponse, filter->impulseLen);
             break;
         case WINDOW_BLACKMAN:
             blackmanWindow(filter->impulseResponse, filter->impulseLen);
