@@ -41,7 +41,7 @@ enum firWindowType {
     WINDOW_RECTANGULAR,
     WINDOW_HAMMING,
     WINDOW_HANN,
-    //WINDOW_BARTLET,
+    WINDOW_BARTLET,
     //WINDOW_BLACKMAN,
 };
 

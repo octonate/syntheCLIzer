@@ -259,6 +259,16 @@ static void hammingWindow(double *impulseResponse, int impulseLen) {
     }
 }
 
+static void bartletWindow(double *impulseResponse, int impulseLen) {
+    for (int i = 0; i < impulseLen; i++) {
+        if (i < impulseLen / 2) {
+            impulseResponse[i] *= 2.0 * i / impulseLen;
+        } else {
+            impulseResponse[i] *=  2.0 - 2.0 * i / impulseLen;
+        }
+    }
+}
+
 void synthAddFilter(struct Synth *synth, struct Filter *filter, enum firWindowType window, int16_t *sampleIn, int16_t *cutoff, int impulseLen) {
     filter->window = window;
     filter->sampleIn = sampleIn;
@@ -296,6 +306,9 @@ static void filterRun(struct Filter *filter) {
             break;
         case WINDOW_HAMMING:
             hammingWindow(filter->impulseResponse, filter->impulseLen);
+            break;
+        case WINDOW_BARTLET:
+            bartletWindow(filter->impulseResponse, filter->impulseLen);
             break;
         }
 
