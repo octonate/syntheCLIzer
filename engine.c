@@ -249,22 +249,22 @@ void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *
 
 static void hannWindow(double *impulseResponse, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
-        impulseResponse[i] *= 0.5 * (1 - cos(M_TAU * i / impulseLen));
+        impulseResponse[i] *= 0.5 * (1 - cos(M_TAU * i / (impulseLen - 1)));
     }
 }
 
 static void hammingWindow(double *impulseResponse, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
-        impulseResponse[i] *= 0.54 - 0.46 * cos(M_TAU * i / impulseLen);
+        impulseResponse[i] *= 0.54 - 0.46 * cos(M_TAU * i / (impulseLen - 1));
     }
 }
 
 static void bartletWindow(double *impulseResponse, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
-        if (i < impulseLen / 2) {
-            impulseResponse[i] *= 2.0 * i / impulseLen;
+        if (i < (impulseLen - 1) / 2) {
+            impulseResponse[i] *= 2.0 * i / (impulseLen - 1);
         } else {
-            impulseResponse[i] *=  2.0 - 2.0 * i / impulseLen;
+            impulseResponse[i] *=  2.0 - 2.0 * i / (impulseLen - 1);
         }
     }
 }
@@ -293,7 +293,7 @@ static void filterRun(struct Filter *filter) {
         double responseSum = 0;
 
         for (int i = 0; i < filter->impulseLen; i++) {
-            double nextImpulse = sinc(M_TAU * cutoffFreq / SAMPLE_RATE * ((double) i - (double) (filter->impulseLen) / 2));
+            double nextImpulse = sinc(M_TAU * cutoffFreq / SAMPLE_RATE * ((double) i - (double) (filter->impulseLen - 1) / 2));
             filter->impulseResponse[i] = nextImpulse;
             responseSum += nextImpulse;
         }
