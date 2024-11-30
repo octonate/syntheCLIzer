@@ -76,7 +76,7 @@ int main() {
     boxAddSlider(&env, &sustain, 5, 1, 4, INT16_MIN, INT16_MAX, 's');
     boxAddSlider(&env, &release, 7, 1, 4, 0, 2000, 'r');
 
-    boxAddSlider(&env, &drive, 9, 1, 4, 0, 10, 'G');
+    boxAddSlider(&env, &drive, 9, 1, 4, 0, 2, 'G');
 
 
     struct NoteInput input1 = {
@@ -113,7 +113,7 @@ int main() {
     synthAddEnv(&synth, &env1, &input1.gate, &attack.val, &decay.val, &sustain.val, &release.val);
 
     struct Attenuator attr;
-    synthAddAttr(&synth, &attr, &mixer.out, &env1.out);
+    synthAddAttr(&synth, &attr, &distortion.out, &env1.out);
 
     struct Box triggerBox;
     tuiAddBox(&tui, &triggerBox, 45, 20, 5, 7, "trig", OUTLINE_DOUBLE);
@@ -122,14 +122,11 @@ int main() {
     boxAddSlider(&triggerBox, &cutoffSlider, 3, 1, 4, 0, 10000, 'C');
 
     struct Filter filter;
-    synthAddFilter(&synth, &filter, FIR_LOWPASS, &attr.out, &env1.out, 427);
+    synthAddFilter(&synth, &filter, WINDOW_HAMMING, &attr.out, &env1.out, 256);
 
     synth.input = &input1;
 
     synth.outPtr = &filter.out;
-
-
-
 
 
     struct Scope scope;
@@ -157,7 +154,7 @@ int main() {
     SDL_PauseAudioDevice(audioDevice, 0);
 
 
-    while ((callbackData.curChar = getchar()) != 'q') {}
+    while ((callbackData.curChar = getchar()) != 'q');
 
     SDL_Delay(50);
 

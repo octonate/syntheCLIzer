@@ -9,7 +9,7 @@
 #define SAMPLE_RATE 44100
 #define STREAM_BUF_SIZE 1024
 #define MIDDLE_C_FREQ 261.63
-#define FILTER_BUF_SIZE 500
+#define FILTER_BUF_SIZE 512
 
 enum ModuleType {
     MODULE_OSC,
@@ -35,6 +35,14 @@ enum FilterType {
     FIR_BANDPASS,
     FIR_NOTCH,
     FIR_MOVING_AVERAGE,
+};
+
+enum firWindowType {
+    WINDOW_RECTANGULAR,
+    WINDOW_HAMMING,
+    WINDOW_HANN,
+    //WINDOW_BARTLET,
+    //WINDOW_BLACKMAN,
 };
 
 struct NoteInput {
@@ -98,6 +106,7 @@ struct Filter {
     int samplesBufIdx;
     int16_t out;
     enum FilterType type;
+    enum firWindowType window;
 };
 
 struct Module {
@@ -130,7 +139,7 @@ void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, 
 void synthAddAttr(struct Synth *synth, struct Attenuator *attr, int16_t *sampleIn, int16_t *gainSample);
 void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *attackPtr, double *decayPtr, double *sustainPtr, double *releasePtr);
 void synthAddDist(struct Synth *synth, struct Distortion *dist, int16_t *sampleIn, double *slope);
-void synthAddFilter(struct Synth *synth, struct Filter *filter, enum FilterType type, int16_t *sampleIn, int16_t *cutoff, int impulesLen);
+void synthAddFilter(struct Synth *synth, struct Filter *filter, enum firWindowType window, int16_t *sampleIn, int16_t *cutoff, int impulesLen);
 
 double sampleToFreq(int16_t sample);
 int16_t freqToSample(double freq);

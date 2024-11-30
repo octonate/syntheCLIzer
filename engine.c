@@ -247,8 +247,20 @@ void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *
     ++synth->modulesLen;
 }
 
-void synthAddFilter(struct Synth *synth, struct Filter *filter, enum FilterType type, int16_t *sampleIn, int16_t *cutoff, int impulseLen) {
-    filter->type = type;
+static void hannWindow(double *impulseResponse, int impulseLen) {
+    for (int i = 0; i < impulseLen; i++) {
+        impulseResponse[i] *= 0.5 * (1 - cos(M_TAU * i / impulseLen));
+    }
+}
+
+static void hammingWindow(double *impulseResponse, int impulseLen) {
+    for (int i = 0; i < impulseLen; i++) {
+        impulseResponse[i] *= 0.54 - 0.46 * cos(M_TAU * i / impulseLen);
+    }
+}
+
+void synthAddFilter(struct Synth *synth, struct Filter *filter, enum firWindowType window, int16_t *sampleIn, int16_t *cutoff, int impulseLen) {
+    filter->window = window;
     filter->sampleIn = sampleIn;
     filter->cutoff = cutoff;
     filter->impulseLen = impulseLen;
@@ -260,13 +272,13 @@ void synthAddFilter(struct Synth *synth, struct Filter *filter, enum FilterType 
     ++synth->modulesLen;
 }
 
-void filterRun(struct Filter *filter) {
+static void filterRun(struct Filter *filter) {
     filter->samplesBuf[filter->samplesBufIdx] = *filter->sampleIn;
     if (++filter->samplesBufIdx == filter->impulseLen) {
         filter->samplesBufIdx = 0;
     }
 
-    //if (*filter->cutoff != filter->prevCutoff) {
+    if (*filter->cutoff != filter->prevCutoff) {
         double cutoffFreq = sampleToFreq(*filter->cutoff);
         double responseSum = 0;
 
@@ -275,10 +287,22 @@ void filterRun(struct Filter *filter) {
             filter->impulseResponse[i] = nextImpulse;
             responseSum += nextImpulse;
         }
+
+        switch (filter->window) {
+        case WINDOW_RECTANGULAR:
+            break;
+        case WINDOW_HANN:
+            hannWindow(filter->impulseResponse, filter->impulseLen);
+            break;
+        case WINDOW_HAMMING:
+            hammingWindow(filter->impulseResponse, filter->impulseLen);
+            break;
+        }
+
         for (int i = 0; i < filter->impulseLen; i++) {
             filter->impulseResponse[i] /= responseSum;
         }
-    //}
+    }
 
     double sampleOut = 0;
     int sumIdx = filter->samplesBufIdx;
