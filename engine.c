@@ -14,7 +14,7 @@ void synthInit(struct Synth *synth) {
 
 static double fmodPos(double x, double y) {
     double result = fmod(x, y);
-    return (result > 0 ? result : result + y);
+    return (result >= 0 ? result : result + y);
 }
 
 static double sinc(double x) {
@@ -85,12 +85,12 @@ static int16_t oscSquare(double freq, uint16_t t) {
 
 static int16_t oscSaw(double freq, uint16_t t) {
     double period = SAMPLE_RATE / freq;
-    return (int16_t) INT16_MAX * (2 * fmod(t, period) / period - 1);
+    return INT16_MAX * (2 * fmod(t, period) / period - 1);
 }
 
 static int16_t oscTri(double freq, uint16_t t) {
     double period = SAMPLE_RATE / freq;
-    return (int16_t) INT16_MAX * (4 * fmod((t < period / 2 ? t : -t), period) / period - 1);
+    return INT16_MAX * ((4.0 * fmodPos((t < period / 2 ? t : -t), period) / period) - 1);
 }
 
 void srandqd(int32_t seed) {
@@ -110,7 +110,7 @@ static void oscRun(struct Oscillator *osc) {
         osc->t = 0;
     }
 
-    uint16_t tOffset = osc->t;
+    uint32_t tOffset = osc->t;
     if (osc->phaseOffset != NULL) {
         tOffset += SAMPLE_RATE * fmodPos(*osc->phaseOffset, 360) / (360 * freq);
         tOffset = tOffset % (uint16_t) period;

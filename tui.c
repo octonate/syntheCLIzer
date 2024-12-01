@@ -21,6 +21,7 @@ static void resetKeyRepeatRate(void) {
 }
 
 static void setKeyRepeatRate(enum ElementType elementType) {
+    return;
     switch (elementType) {
     case ELEMENT_SLIDER:
         system("xset r rate 25");
@@ -281,11 +282,12 @@ void boxAddSlider(struct Box *box, struct Slider *slider, int x, int y, int heig
     slider->val = (double) slider->divVal / maxDivs * (maxVal - minVal) + minVal;
 
     if (box->elementsLen == 0) {
-        box->elements[box->elementsLen].isFoc = true;
+        box->elements[0].isFoc = true;
         slider->isFoc = true;
         setKeyRepeatRate(ELEMENT_SLIDER);
     } else {
-        box->elements[0].isFoc = false;
+        box->elements[box->elementsLen].isFoc = false;
+        slider->isFoc = false;
     }
 
     box->elements[box->elementsLen].ptr.slider = slider;
