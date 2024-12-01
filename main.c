@@ -11,14 +11,14 @@ SDL_AudioDeviceID audioDevice;
 SDL_AudioSpec audioSpec;
 
 
-void goodbye() {
+void goodbye(void) {
     SDL_CloseAudioDevice(audioDevice);
     SDL_Quit();
 
     resetTerm();
 }
 
-int main() {
+int main(void) {
     system("clear");
     hello();
     srandqd(42);
@@ -122,7 +122,7 @@ int main() {
     boxAddSlider(&triggerBox, &cutoffSlider, 3, 1, 4, 0, 10000, 'C');
 
     struct Filter filter;
-    synthAddFilter(&synth, &filter, WINDOW_BLACKMAN, &attr.out, &env1.out, 5);
+    synthAddFilter(&synth, &filter, WINDOW_RECTANGULAR, &attr.out, &env1.out, 255);
 
     synth.input = &input1;
 

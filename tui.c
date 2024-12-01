@@ -14,7 +14,7 @@ const struct ColorInfo defaultSliderClrs = {
     .bgFoc = CLR_BG_BR_K
 };
 
-static void resetKeyRepeatRate() {
+static void resetKeyRepeatRate(void) {
     system("xset r rate 660");
     system("xset r 43");
     system("xset r 30");
@@ -466,7 +466,7 @@ void tuiAddBox(struct Tui *tui, struct Box *box, int x, int y, int width, int he
 }
 
 static struct termios oldTerm, newTerm;
-void hello() {
+void hello(void) {
     tcgetattr(STDIN_FILENO, &oldTerm);
     newTerm = oldTerm;
     newTerm.c_lflag &= ~(ICANON | ECHO);
@@ -477,7 +477,7 @@ void hello() {
 }
 
 
-void resetTerm() {
+void resetTerm(void) {
     tcsetattr(STDIN_FILENO, TCSANOW, &oldTerm);
     printf("%s%s", CURSOR_SHOW, TEXT_RESET);
     resetKeyRepeatRate();

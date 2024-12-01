@@ -213,8 +213,8 @@ void boxAddRadios(struct Box *box, struct Radios *radios, int x, int y, char *la
 void radiosAddButton(struct Radios *radios, char *name, int val);
 void sliderSetClr(struct Slider *slider, enum ColorFG fg, enum ColorBG bg, enum ColorFG fgFoc, enum ColorBG bgFoc);
 
-void hello();
-void resetTerm();
+void hello(void);
+void resetTerm(void);
 
 
 #endif //TUI_H
