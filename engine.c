@@ -4,6 +4,7 @@
 #include <SDL2/SDL_audio.h>
 #include <SDL2/SDL.h>
 #include <err.h>
+
 #include "engine.h"
 
 uint64_t nextRand = 42;
@@ -105,7 +106,7 @@ static int16_t randqd(void) {
 static void oscRun(struct Oscillator *osc) {
     double freq = sampleToFreq(*osc->freqSample);
     double period = SAMPLE_RATE / freq;
-    int16_t sample;
+    int16_t sample = INT16_MIN;
     if (osc->t > period) {
         osc->t = 0;
     }
@@ -150,8 +151,6 @@ void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, e
 }
 
 static void ampRun(struct Amplifier *amp) {
-    //double freqOut = sampleToFreq(*amp->sampleIn) * *amp->gain;
-    //double sampleOut = freqToSample(freqOut);
     double sampleOut = (double) *amp->sampleIn * *amp->gain;
     if (sampleOut > INT16_MAX) {
         amp->out = INT16_MAX;
@@ -247,39 +246,62 @@ void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *
     ++synth->modulesLen;
 }
 
-static void hannWindow(double *impulseResponse, int impulseLen) {
+static void rectangularWindow(double *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
-        impulseResponse[i] *= 0.5 * (1 - cos(M_TAU * i / (impulseLen - 1)));
+        windowBuf[i] = 1;
     }
 }
 
-static void hammingWindow(double *impulseResponse, int impulseLen) {
+static void hannWindow(double *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
-        impulseResponse[i] *= 0.54 - 0.46 * cos(M_TAU * i / (impulseLen - 1));
+        windowBuf[i] = 0.5 * (1 - cos(M_TAU * i / (impulseLen - 1)));
     }
 }
 
-static void bartlettWindow(double *impulseResponse, int impulseLen) {
+static void hammingWindow(double *windowBuf, int impulseLen) {
+    for (int i = 0; i < impulseLen; i++) {
+        windowBuf[i] = 0.54 - 0.46 * cos(M_TAU * i / (impulseLen - 1));
+    }
+}
+
+static void bartlettWindow(double *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
         if (i < (impulseLen - 1) / 2) {
-            impulseResponse[i] *= 2.0 * i / (impulseLen - 1);
+            windowBuf[i] = 2.0 * i / (impulseLen - 1);
         } else {
-            impulseResponse[i] *=  2.0 - 2.0 * i / (impulseLen - 1);
+            windowBuf[i] =  2.0 - 2.0 * i / (impulseLen - 1);
         }
     }
 }
 
-static void blackmanWindow(double *impulseResponse, int impulseLen) {
+static void blackmanWindow(double *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
-        impulseResponse[i] *= 0.42 - 0.5 * cos(M_TAU * i / (impulseLen - 1) + 0.08 * cos(2 * M_TAU * i / (impulseLen - 1)));
+        windowBuf[i] = 0.42 - 0.5 * cos(M_TAU * i / (impulseLen - 1) + 0.08 * cos(2 * M_TAU * i / (impulseLen - 1)));
     }
 }
 
 void synthAddFilter(struct Synth *synth, struct Filter *filter, enum firWindowType window, int16_t *sampleIn, int16_t *cutoff, int impulseLen) {
-    filter->window = window;
     filter->sampleIn = sampleIn;
     filter->cutoff = cutoff;
     filter->impulseLen = impulseLen;
+
+    switch (window) {
+    case WINDOW_RECTANGULAR:
+        rectangularWindow(filter->windowBuf, filter->impulseLen);
+        break;
+    case WINDOW_HANN:
+        hannWindow(filter->windowBuf, filter->impulseLen);
+        break;
+    case WINDOW_HAMMING:
+        hammingWindow(filter->windowBuf, filter->impulseLen);
+        break;
+    case WINDOW_BARTLETT:
+        bartlettWindow(filter->windowBuf, filter->impulseLen);
+        break;
+    case WINDOW_BLACKMAN:
+        blackmanWindow(filter->windowBuf, filter->impulseLen);
+        break;
+    }
 
     filter->samplesBufIdx = 0;
 
@@ -299,26 +321,9 @@ static void filterRun(struct Filter *filter) {
         double responseSum = 0;
 
         for (int i = 0; i < filter->impulseLen; i++) {
-            double nextImpulse = sinc(M_TAU * cutoffFreq / SAMPLE_RATE * ((double) i - (double) (filter->impulseLen - 1) / 2));
+            double nextImpulse = filter->windowBuf[i] * sinc(M_TAU * cutoffFreq / SAMPLE_RATE * ((double) i - (double) (filter->impulseLen - 1) / 2));
             filter->impulseResponse[i] = nextImpulse;
             responseSum += nextImpulse;
-        }
-
-        switch (filter->window) {
-        case WINDOW_RECTANGULAR:
-            break;
-        case WINDOW_HANN:
-            hannWindow(filter->impulseResponse, filter->impulseLen);
-            break;
-        case WINDOW_HAMMING:
-            hammingWindow(filter->impulseResponse, filter->impulseLen);
-            break;
-        case WINDOW_BARTLETT:
-            bartlettWindow(filter->impulseResponse, filter->impulseLen);
-            break;
-        case WINDOW_BLACKMAN:
-            blackmanWindow(filter->impulseResponse, filter->impulseLen);
-            break;
         }
 
         for (int i = 0; i < filter->impulseLen; i++) {

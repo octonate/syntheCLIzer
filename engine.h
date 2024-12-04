@@ -99,6 +99,7 @@ struct Mixer {
 struct Filter {
     int16_t samplesBuf[FILTER_BUF_SIZE];
     double impulseResponse[FILTER_BUF_SIZE];
+    double windowBuf[FILTER_BUF_SIZE];
     int16_t *sampleIn;
     int16_t *cutoff;
     int16_t prevCutoff;
@@ -106,7 +107,6 @@ struct Filter {
     int samplesBufIdx;
     int16_t out;
     enum FilterType type;
-    enum firWindowType window;
 };
 
 struct Module {

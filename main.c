@@ -122,7 +122,7 @@ int main(void) {
     boxAddSlider(&triggerBox, &cutoffSlider, 3, 1, 4, 0, 10000, 'C');
 
     struct Filter filter;
-    synthAddFilter(&synth, &filter, WINDOW_RECTANGULAR, &attr.out, &env1.out, 255);
+    synthAddFilter(&synth, &filter, WINDOW_HANN, &attr.out, &env1.out, 255);
 
     synth.input = &input1;
 
