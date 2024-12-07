@@ -23,7 +23,65 @@ int main(void) {
     hello();
     srandqd(42);
 
-    struct Tui tui;
+    struct Tui tui = {
+        .boxes[0] = &(struct Box) {
+            .x = 10,
+            .y = 10,
+            .width = 16,
+            .height = 8,
+            .label = "osc1",
+            .style = OUTLINE_THIN
+        },
+        .boxes[1] = &(struct Box) {
+            .x = 10,
+            .y = 20,
+            .width = 16,
+            .height = 8,
+            .label = "osc2",
+            .style = OUTLINE_THIN
+        },
+        .boxes[2] = &(struct Box) {
+            .x = 10, .y = 30, .width = 16, .height = 8, .label = "osc3", .style = OUTLINE_THIN
+        },
+    };
+
+    struct Tui tui2 = {
+        .boxes = {
+            [0] = &(struct Box) {
+                .x = 10,
+                .y = 10,
+                .width = 16,
+                .height = 8,
+                .label = "osc1",
+                .style = OUTLINE_THIN,
+                .elements[0] = {
+                    .ptr.radios = &(struct Radios) {
+                    .x = 1,
+                    .y = 1,
+                    .label = "shape",
+                    .buttonList = {
+                        { "sin", WAV_SINE },
+                        { "sqr", WAV_SQUARE },
+                        { "tri", WAV_TRI },
+                        { "saw", WAV_SAW },
+                        { "noise", WAV_NOISE },
+                    },
+                },
+                },
+                .elements[1].ptr.slider = &(struct Slider) {
+                }
+            },
+            [1] = &(struct Box) {
+                .x = 10,
+                .y = 20,
+                .width = 16,
+                .height = 8,
+                .label = "osc2",
+                .style = OUTLINE_THICK,
+            }
+        }
+    };
+
     tuiInit(&tui, "3xOsc");
 
     struct Box oscBox1, oscBox2, oscBox3, env;
@@ -78,12 +136,80 @@ int main(void) {
 
     boxAddSlider(&env, &drive, 9, 1, 4, 0, 2, 'G');
 
+    struct Box triggerBox;
+    struct Slider cutoffSlider;
+
+    boxAddSlider(&triggerBox, &cutoffSlider, 3, 1, 4, 0, 10000, 'C');
+
 
     struct NoteInput input1 = {
         .gate = 0,
         .val = 0,
     };
 
+    struct Synth synth2 = {
+        .input = &(struct NoteInput) {
+            .gate = 0,
+            .val = 0,
+        },
+
+        .amps = (struct Amplifier []) {
+            [0] = { &input1.val, &detune1.val },
+            [1] = { &input1.val, &detune2.val },
+            [2] = { &input1.val, &detune3.val },
+
+            [3] = { &synth2.oscs[0]->out, &oscVol1.val },
+            [4] = { &synth2.oscs[1]->out, &oscVol2.val },
+            [5] = { &synth2.oscs[2]->out, &oscVol3.val },
+        },
+
+        .oscs = (struct Oscillator []) {
+            [0] = { &synth2.amps[0]->out, (enum Waveform *)&shape1.val, &phase1.val },
+            [1] = { &synth2.amps[1]->out, (enum Waveform *)&shape2.val, &phase1.val },
+            [2] = { &synth2.amps[2]->out, (enum Waveform *)&shape3.val, &phase1.val },
+            [3] = { &(int16_t) { freqToSample(123.4) }, &(enum Waveform) { WAV_SINE } }
+        },
+
+        .mixers = (struct Mixer []) {
+            [0] = { 
+                (int16_t *[]) {
+                    &synth2.oscs[0]->out,
+                    &synth2.oscs[1]->out,
+                    &synth2.oscs[2]->out,
+                    &synth2.oscs[3]->out,
+                    NULL
+                },
+            }
+        },
+
+        .dists = (struct Distortion []) {
+            [0] = { &synth2.mixers[0]->out, &drive.val }
+        },
+
+        .envs = (struct Envelope []) {
+            [0] = {
+                .gate = &input1.gate,
+                .attackMs = &attack.val,
+                .decayMs = &decay.val,
+                .sustain = &sustain.val,
+                .releaseMs = &release.val,
+            }
+        },
+
+        .attrs = (struct Attenuator []) {
+            [0] = { &synth2.dists[0]->out, &synth2.envs[0]->out }
+        },
+
+        .filters = (struct Filter []) {
+            [0] = {
+                .cutoff = &synth2.envs[0]->out,
+                .sampleIn = &synth2.attrs[0]->out,
+                .impulseLen = 10,
+            }
+        },
+
+        .outPtr = &synth2.filters[0]->out,
+    };
     struct Synth synth;
     synthInit(&synth);
 
@@ -115,11 +241,9 @@ int main(void) {
     struct Attenuator attr;
     synthAddAttr(&synth, &attr, &distortion.out, &env1.out);
 
-    struct Box triggerBox;
     tuiAddBox(&tui, &triggerBox, 45, 20, 5, 7, "trig", OUTLINE_DOUBLE);
-    struct Slider trigSlider, cutoffSlider;
+    struct Slider trigSlider;
     boxAddSlider(&triggerBox, &trigSlider, 1, 1, 4, 0, 10000, 'T');
-    boxAddSlider(&triggerBox, &cutoffSlider, 3, 1, 4, 0, 10000, 'C');
 
     struct Filter filter;
     synthAddFilter(&synth, &filter, WINDOW_HANN, &attr.out, &env1.out, 255);

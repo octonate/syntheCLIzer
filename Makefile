@@ -1,6 +1,6 @@
-CFLAGS = -Werror -Wall -pedantic -Wextra -Wold-style-declaration -Wno-unused-parameter -Wstrict-prototypes -std=c99
+CFLAGS = -Wall -pedantic -Wextra -Wold-style-declaration -Wno-unused-parameter -Wstrict-prototypes -std=c99
 LDLIBS = -lm -lSDL2
-CC = gcc
+CC = clang
 OBJDIR = .obj
 BIN = synth
 

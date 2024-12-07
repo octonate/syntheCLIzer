@@ -246,25 +246,25 @@ void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *
     ++synth->modulesLen;
 }
 
-static void rectangularWindow(double *windowBuf, int impulseLen) {
+void rectangularWindow(double *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
         windowBuf[i] = 1;
     }
 }
 
-static void hannWindow(double *windowBuf, int impulseLen) {
+void hannWindow(double *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
         windowBuf[i] = 0.5 * (1 - cos(M_TAU * i / (impulseLen - 1)));
     }
 }
 
-static void hammingWindow(double *windowBuf, int impulseLen) {
+void hammingWindow(double *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
         windowBuf[i] = 0.54 - 0.46 * cos(M_TAU * i / (impulseLen - 1));
     }
 }
 
-static void bartlettWindow(double *windowBuf, int impulseLen) {
+void bartlettWindow(double *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
         if (i < (impulseLen - 1) / 2) {
             windowBuf[i] = 2.0 * i / (impulseLen - 1);
@@ -274,7 +274,7 @@ static void bartlettWindow(double *windowBuf, int impulseLen) {
     }
 }
 
-static void blackmanWindow(double *windowBuf, int impulseLen) {
+void blackmanWindow(double *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
         windowBuf[i] = 0.42 - 0.5 * cos(M_TAU * i / (impulseLen - 1) + 0.08 * cos(2 * M_TAU * i / (impulseLen - 1)));
     }

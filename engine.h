@@ -10,6 +10,7 @@
 #define STREAM_BUF_SIZE 1024
 #define MIDDLE_C_FREQ 261.63
 #define FILTER_BUF_SIZE 512
+#define MODULE_BUF_SIZE 16
 
 enum ModuleType {
     MODULE_OSC,
@@ -120,11 +121,18 @@ struct Module {
         struct Mixer *mixer;
         struct Filter *filter;
     } ptr;
+    int16_t out;
 };
 
 struct Synth {
     struct NoteInput *input;
-    struct Module modules[LIST_BUF_SIZE];
+    struct Oscillator *oscs[MODULE_BUF_SIZE];
+    struct Envelope *envs[MODULE_BUF_SIZE];
+    struct Amplifier *amps[MODULE_BUF_SIZE];
+    struct Distortion *dists[MODULE_BUF_SIZE];
+    struct Attenuator *attrs[MODULE_BUF_SIZE];
+    struct Mixer *mixers[MODULE_BUF_SIZE];
+    struct Filter *filters[MODULE_BUF_SIZE];
     int modulesLen;
     int16_t *outPtr;
     struct Scope *scope;
