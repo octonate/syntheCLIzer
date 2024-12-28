@@ -242,13 +242,13 @@ static void filterRun(struct Filter *filter) {
         double cutoffFreq = sampleToFreq(*filter->cutoff);
         double responseSum = 0;
 
-        for (int i = 0; i < filter->impulseLen; i++) {
+        for (size_t i = 0; i < filter->impulseLen; i++) {
             double nextImpulse = filter->_internal.windowBuf[i] * sinc(M_TAU * cutoffFreq / SAMPLE_RATE * ((double) i - (double) (filter->impulseLen - 1) / 2));
             filter->_internal.impulseResponse[i] = nextImpulse;
             responseSum += nextImpulse;
         }
 
-        for (int i = 0; i < filter->impulseLen; i++) {
+        for (size_t i = 0; i < filter->impulseLen; i++) {
             filter->_internal.impulseResponse[i] /= responseSum;
         }
     }
@@ -256,7 +256,7 @@ static void filterRun(struct Filter *filter) {
     double sampleOut = 0;
     int sumIdx = filter->_internal.samplesBufIdx;
 
-    for (int i = 0; i < filter->impulseLen; i++) {
+    for (size_t i = 0; i < filter->impulseLen; i++) {
         if (--sumIdx < 0) {
             sumIdx = filter->impulseLen - 1;
         }
