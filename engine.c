@@ -81,6 +81,11 @@ static int16_t randqd(void) {
 }
 
 static void oscRun(struct Oscillator *osc) {
+    if (*osc->waveform == WAV_NOISE) {
+        osc->out = randqd();
+        return;
+    }
+
     double freq = sampleToFreq(*osc->freqSample);
     double period = SAMPLE_RATE / freq;
     int16_t sample = INT16_MIN;
@@ -106,9 +111,6 @@ static void oscRun(struct Oscillator *osc) {
         break;
     case WAV_SAW:
         sample = oscSaw(freq, tOffset);
-        break;
-    case WAV_NOISE:
-        sample = randqd();
         break;
     }
     osc->_internal.t += 1;
@@ -271,7 +273,7 @@ void synthRun(struct Synth *synth) {
     //for (int i = 0; (*synth->amps)[i].sampleIn != NULL; i++) {
     //    ampRun(&(*synth->amps)[i]);
     //}
-    for (int i = 0; synth->oscs[i].freqSample != NULL && i < OSCS_LEN; i++) {
+    for (int i = 0; synth->oscs[i].waveform != WAV_OSC_NOT_INIT && i < OSCS_LEN; i++) {
         oscRun(&synth->oscs[i]);
     }
     for (int i = 0; synth->mixers[i].samplesIn != NULL && i < MIXERS_LEN; i++) {

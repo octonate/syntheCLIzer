@@ -58,18 +58,18 @@ int main(void) {
             .freqSample = PTR(freqToSample(400)),
         },
         .oscs[2] = {
-            .waveform = PTR(WAV_SINE),
-            .freqSample = PTR(freqToSample(1)),
+            .waveform = PTR(WAV_NOISE),
         },
         .mixers[0].samplesIn = NULL_TERM_ARR(int16_t*,
             &synth.oscs[0].out,
-            &synth.oscs[1].out
+            &synth.oscs[1].out,
+            &synth.oscs[2].out
         ),
         .filters[0] = {
             .sampleIn = &synth.mixers[0].out,
-            .cutoff = PTR(freqToSample(100.0)),
-            .impulseLen = 128,
-            .window = WINDOW_HAMMING,
+            .cutoff = PTR(freqToSample(800.0)),
+            .impulseLen = 96,
+            .window = WINDOW_BLACKMAN,
         },
         .outPtr = &synth.filters[0].out,
     };

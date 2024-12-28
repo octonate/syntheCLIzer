@@ -23,6 +23,7 @@ enum {
 };
 
 enum Waveform {
+    WAV_OSC_NOT_INIT = 0,
     WAV_SINE,
     WAV_SQUARE,
     WAV_TRI,
