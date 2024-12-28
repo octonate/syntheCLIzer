@@ -7,13 +7,14 @@
 #include "tui.h"
 
 
+#define NULL_TERM_ARR(type, ...) (type[]) {__VA_ARGS__, NULL}
+
 #define PTR(x) _Generic((x), \
     int16_t: &(int16_t){x}, \
     int: &(int16_t){x}, \
     double: &(double){x}, \
     default: &(int16_t){x})
 
-#define NULL_TERM_ARR(type, ...) (type[]) {__VA_ARGS__, NULL}
 
 SDL_AudioDeviceID audioDevice;
 SDL_AudioSpec audioSpec;
@@ -30,7 +31,7 @@ void audioCallback(void *userdata, uint8_t *stream, int len) {
 
     int16_t *stream16 = (int16_t *)stream;
 
-    for (unsigned i = 0; i < len / sizeof (int16_t); i++) {
+    for (size_t i = 0; i < len / sizeof(int16_t); i++) {
         //switch (data->curChar) {
         //case '\0':
         //    break;
@@ -126,6 +127,7 @@ int main(void) {
 
     SDL_CloseAudioDevice(audioDevice);
     SDL_Quit();
+
     resetTerm();
 
     return 0;
