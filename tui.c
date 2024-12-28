@@ -468,7 +468,7 @@ void tuiAddBox(struct Tui *tui, struct Box *box, int x, int y, int width, int he
 }
 
 static struct termios oldTerm, newTerm;
-void hello(void) {
+void termInit(void) {
     tcgetattr(STDIN_FILENO, &oldTerm);
     newTerm = oldTerm;
     newTerm.c_lflag &= ~(ICANON | ECHO);

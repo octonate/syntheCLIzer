@@ -126,14 +126,13 @@ struct Module {
 
 struct Synth {
     struct NoteInput *input;
-    struct Oscillator *oscs[MODULE_BUF_SIZE];
-    struct Envelope *envs[MODULE_BUF_SIZE];
-    struct Amplifier *amps[MODULE_BUF_SIZE];
-    struct Distortion *dists[MODULE_BUF_SIZE];
-    struct Attenuator *attrs[MODULE_BUF_SIZE];
-    struct Mixer *mixers[MODULE_BUF_SIZE];
-    struct Filter *filters[MODULE_BUF_SIZE];
-    int modulesLen;
+    struct Oscillator (*oscs)[];
+    struct Envelope (*envs)[];
+    struct Amplifier (*amps)[];
+    struct Distortion (*dists)[];
+    struct Attenuator (*attrs)[];
+    struct Mixer (*mixers)[];
+    struct Filter (*filters)[];
     int16_t *outPtr;
     struct Scope *scope;
 };

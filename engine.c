@@ -10,7 +10,7 @@
 uint64_t nextRand = 42;
 
 void synthInit(struct Synth *synth) {
-    synth->modulesLen = 0;
+    //synth->modulesLen = 0;
 }
 
 static double fmodPos(double x, double y) {
@@ -26,29 +26,29 @@ static void mixerRun(struct Mixer *mixer) {
     double total = 0;
     int len;
     for (len = 0; mixer->samplesIn[len] != NULL; len++) {
-        total += (double) *mixer->samplesIn[len];
+        total += (double) (*mixer->samplesIn)[len];
     }
     mixer->out = (total / len);
 }
 
-void synthAddmixer(struct Synth *synth, struct Mixer *mixer, int16_t *samplesIn[]) {
-    mixer->samplesIn = samplesIn;
-    mixer->out = INT16_MIN;
-
-    synth->modules[synth->modulesLen].tag = MODULE_MIXER;
-    synth->modules[synth->modulesLen].ptr.mixer = mixer;
-    ++synth->modulesLen;
-}
-
-void synthAddDist(struct Synth *synth, struct Distortion *dist, int16_t *sampleIn, double *slope) {
-    dist->sampleIn = sampleIn;
-    dist->slope = slope;
-    dist->out = INT16_MIN;
-
-    synth->modules[synth->modulesLen].tag = MODULE_DIST;
-    synth->modules[synth->modulesLen].ptr.dist = dist;
-    ++synth->modulesLen;
-}
+//void synthAddmixer(struct Synth *synth, struct Mixer *mixer, int16_t *samplesIn[]) {
+//    mixer->samplesIn = samplesIn;
+//    mixer->out = INT16_MIN;
+//
+//    synth->modules[synth->modulesLen].tag = MODULE_MIXER;
+//    synth->modules[synth->modulesLen].ptr.mixer = mixer;
+//    ++synth->modulesLen;
+//}
+//
+//void synthAddDist(struct Synth *synth, struct Distortion *dist, int16_t *sampleIn, double *slope) {
+//    dist->sampleIn = sampleIn;
+//    dist->slope = slope;
+//    dist->out = INT16_MIN;
+//
+//    synth->modules[synth->modulesLen].tag = MODULE_DIST;
+//    synth->modules[synth->modulesLen].ptr.dist = dist;
+//    ++synth->modulesLen;
+//}
 
 static void distortionRun(struct Distortion *distortion) {
     double x = (double) (*distortion->sampleIn + INT16_MAX) / (INT16_MAX - INT16_MIN);
@@ -138,17 +138,17 @@ static void oscRun(struct Oscillator *osc) {
     osc->out = sample;
 }
 
-void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, enum Waveform *waveform, double *phaseOffset) {
-    osc->freqSample = freqIn;
-    osc->waveform = waveform;
-    osc->phaseOffset = phaseOffset;
-    osc->t = 0;
-    osc->out = INT16_MIN;
-
-    synth->modules[synth->modulesLen].tag = MODULE_OSC;
-    synth->modules[synth->modulesLen].ptr.osc= osc;
-    ++synth->modulesLen;
-}
+//void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, enum Waveform *waveform, double *phaseOffset) {
+//    osc->freqSample = freqIn;
+//    osc->waveform = waveform;
+//    osc->phaseOffset = phaseOffset;
+//    osc->t = 0;
+//    osc->out = INT16_MIN;
+//
+//    synth->modules[synth->modulesLen].tag = MODULE_OSC;
+//    synth->modules[synth->modulesLen].ptr.osc= osc;
+//    ++synth->modulesLen;
+//}
 
 static void ampRun(struct Amplifier *amp) {
     double sampleOut = (double) *amp->sampleIn * *amp->gain;
@@ -161,29 +161,29 @@ static void ampRun(struct Amplifier *amp) {
     }
 }
 
-void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, double *gain) {
-    amp->sampleIn = sampleIn;
-    amp->gain = gain;
-    amp->out = INT16_MIN;
-
-    synth->modules[synth->modulesLen].tag = MODULE_AMP;
-    synth->modules[synth->modulesLen].ptr.amp = amp;
-    ++synth->modulesLen;
-}
+//void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, double *gain) {
+//    amp->sampleIn = sampleIn;
+//    amp->gain = gain;
+//    amp->out = INT16_MIN;
+//
+//    synth->modules[synth->modulesLen].tag = MODULE_AMP;
+//    synth->modules[synth->modulesLen].ptr.amp = amp;
+//    ++synth->modulesLen;
+//}
 
 static void attrRun(struct Attenuator *attr) {
     attr->out = *attr->sampleIn * (double) (*attr->amount - INT16_MIN) / (INT16_MAX - INT16_MIN);
 }
 
-void synthAddAttr(struct Synth *synth, struct Attenuator *attr, int16_t *sampleIn, int16_t *gainSample) {
-    attr->sampleIn = sampleIn;
-    attr->amount = gainSample;
-    attr->out = INT16_MIN;
-
-    synth->modules[synth->modulesLen].tag = MODULE_ATTR;
-    synth->modules[synth->modulesLen].ptr.attr = attr;
-    ++synth->modulesLen;
-}
+//void synthAddAttr(struct Synth *synth, struct Attenuator *attr, int16_t *sampleIn, int16_t *gainSample) {
+//    attr->sampleIn = sampleIn;
+//    attr->amount = gainSample;
+//    attr->out = INT16_MIN;
+//
+//    synth->modules[synth->modulesLen].tag = MODULE_ATTR;
+//    synth->modules[synth->modulesLen].ptr.attr = attr;
+//    ++synth->modulesLen;
+//}
 
 static void envRun(struct Envelope *env) {
     uint32_t attackPeriod = *env->attackMs * (double) SAMPLE_RATE / 1000;
@@ -229,22 +229,22 @@ static void envRun(struct Envelope *env) {
     env->out = sample;
 }
 
-void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *attackPtr, double *decayPtr, double *sustainPtr, double *releasePtr) {
-    env->gate = gate;
-    env->attackMs = attackPtr;
-    env->decayMs = decayPtr;
-    env->sustain = sustainPtr;
-    env->releaseMs = releasePtr;
-
-    *env->gate = false;
-    env->t = 0;
-    env->prevGate = false;
-    env->out = INT16_MIN;
-
-    synth->modules[synth->modulesLen].tag = MODULE_ENV;
-    synth->modules[synth->modulesLen].ptr.env = env;
-    ++synth->modulesLen;
-}
+//void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *attackPtr, double *decayPtr, double *sustainPtr, double *releasePtr) {
+//    env->gate = gate;
+//    env->attackMs = attackPtr;
+//    env->decayMs = decayPtr;
+//    env->sustain = sustainPtr;
+//    env->releaseMs = releasePtr;
+//
+//    *env->gate = false;
+//    env->t = 0;
+//    env->prevGate = false;
+//    env->out = INT16_MIN;
+//
+//    synth->modules[synth->modulesLen].tag = MODULE_ENV;
+//    synth->modules[synth->modulesLen].ptr.env = env;
+//    ++synth->modulesLen;
+//}
 
 void rectangularWindow(double *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
@@ -305,9 +305,9 @@ void synthAddFilter(struct Synth *synth, struct Filter *filter, enum firWindowTy
 
     filter->samplesBufIdx = 0;
 
-    synth->modules[synth->modulesLen].tag = MODULE_FILTER;
-    synth->modules[synth->modulesLen].ptr.filter = filter;
-    ++synth->modulesLen;
+//    synth->modules[synth->modulesLen].tag = MODULE_FILTER;
+//    synth->modules[synth->modulesLen].ptr.filter = filter;
+//    ++synth->modulesLen;
 }
 
 static void filterRun(struct Filter *filter) {
@@ -346,31 +346,11 @@ static void filterRun(struct Filter *filter) {
 }
 
 void synthRun(struct Synth *synth) {
-    for (int i = 0; i < synth->modulesLen; i++) {
-        struct Module curModule = synth->modules[i];
-        switch (curModule.tag) {
-        case MODULE_OSC:
-            oscRun(curModule.ptr.osc);
-            break;
-        case MODULE_ENV:
-            envRun(curModule.ptr.env);
-            break;
-        case MODULE_AMP:
-            ampRun(curModule.ptr.amp);
-            break;
-        case MODULE_DIST:
-            distortionRun(curModule.ptr.dist);
-            break;
-        case MODULE_ATTR:
-            attrRun(curModule.ptr.attr);
-            break;
-        case MODULE_MIXER:
-            mixerRun(curModule.ptr.mixer);
-            break;
-        case MODULE_FILTER:
-            filterRun(curModule.ptr.filter);
-            break;
-        }
+    //for (int i = 0; (*synth->amps)[i].sampleIn != NULL; i++) {
+    //    ampRun(&(*synth->amps)[i]);
+    //}
+    for (int i = 0; (*synth->oscs)[i].freqSample != NULL; i++) {
+        oscRun(&(*synth->oscs)[i]);
     }
 }
 
