@@ -2,8 +2,8 @@
 #define ENGINE_H
 
 #include <stdint.h>
-#include <SDL2/SDL_audio.h>
-#include <SDL2/SDL.h>
+#include <stdlib.h>
+
 #include "common.h"
 
 #define SAMPLE_RATE 44100
@@ -123,8 +123,8 @@ struct Synth {
     struct Attenuator attrs[ATTRS_LEN];
     struct Mixer mixers[MIXERS_LEN];
     struct Filter filters[FILTERS_LEN];
-    int16_t *outPtr;
     struct Scope *scope;
+    int16_t *outPtr;
 };
 
 void synthRun(struct Synth *synth);
@@ -134,7 +134,5 @@ int16_t freqToSample(double freq);
 double sampleToDouble(int16_t sample, double rangeMin, double rangeMax);
 
 void srandqd(int32_t seed);
-
-void audioCallback(void *userdata, Uint8 *stream, int len);
 
 #endif //ENGINE_H

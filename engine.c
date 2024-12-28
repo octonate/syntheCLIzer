@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "engine.h"
 
@@ -267,9 +268,9 @@ static void filterRun(struct Filter *filter) {
 }
 
 void synthRun(struct Synth *synth) {
-    //for (int i = 0; (*synth->amps)[i].sampleIn != NULL; i++) {
-    //    ampRun(&(*synth->amps)[i]);
-    //}
+    for (int i = 0; synth->amps[i].sampleIn != NULL; i++) {
+        ampRun(&synth->amps[i]);
+    }
     for (int i = 0; synth->oscs[i].waveform != WAV_OSC_NOT_INIT && i < OSCS_LEN; i++) {
         oscRun(&synth->oscs[i]);
     }
