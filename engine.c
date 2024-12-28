@@ -26,7 +26,7 @@ static void mixerRun(struct Mixer *mixer) {
     mixer->out = (total / len);
 }
 
-static void distortionRun(struct Distortion *distortion) {
+static void distRun(struct Distortion *distortion) {
     double x = (double) (*distortion->sampleIn + INT16_MAX) / (INT16_MAX - INT16_MIN);
     distortion->out = (INT16_MAX - INT16_MIN) * pow(x, *distortion->slope) / (pow(x, *distortion->slope) + pow(1 - x, *distortion->slope)) + INT16_MIN;
 }
@@ -268,17 +268,26 @@ static void filterRun(struct Filter *filter) {
 }
 
 void synthRun(struct Synth *synth) {
-    for (int i = 0; synth->amps[i].sampleIn != NULL; i++) {
+    for (int i = 0; synth->amps[i].sampleIn != NULL && i < AMPS_LEN; i++) {
         ampRun(&synth->amps[i]);
     }
-    for (int i = 0; synth->oscs[i].waveform != WAV_OSC_NOT_INIT && i < OSCS_LEN; i++) {
+    for (int i = 0; synth->oscs[i].waveform != NULL && i < OSCS_LEN; i++) {
         oscRun(&synth->oscs[i]);
     }
     for (int i = 0; synth->mixers[i].samplesIn != NULL && i < MIXERS_LEN; i++) {
         mixerRun(&synth->mixers[i]);
     }
-    for (int i = 0; synth->filters[i].sampleIn != NULL && i < MIXERS_LEN; i++) {
+    for (int i = 0; synth->filters[i].sampleIn != NULL && i < FILTERS_LEN; i++) {
         filterRun(&synth->filters[i]);
+    }
+    for (int i = 0; synth->envs[i].gate != NULL && i < ENVS_LEN; i++) {
+        envRun(&synth->envs[i]);
+    }
+    for (int i = 0; synth->dists[i].sampleIn != NULL && i < DISTS_LEN; i++) {
+        distRun(&synth->dists[i]);
+    }
+    for (int i = 0; synth->attrs[i].sampleIn != NULL && i < ATTRS_LEN; i++) {
+        attrRun(&synth->attrs[i]);
     }
 }
 
