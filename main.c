@@ -5,7 +5,15 @@
 #include <SDL2/SDL.h>
 #include "engine.h"
 #include "tui.h"
-#include "callback.h"
+
+
+#define PTR(x) _Generic((x), \
+    int16_t: &(int16_t){x}, \
+    int: &(int16_t){x}, \
+    double: &(double){x}, \
+    default: &(int16_t){x})
+
+#define NULL_TERM_ARR(type, ...) (type[]) {__VA_ARGS__, NULL}
 
 SDL_AudioDeviceID audioDevice;
 SDL_AudioSpec audioSpec;
@@ -18,95 +26,56 @@ void goodbye(void) {
     resetTerm();
 }
 
+struct Userdata {
+    struct Synth *synth;
+};
+
+
+void audioCallback(void *userdata, uint8_t *stream, int len) {
+    struct Userdata *data = (struct Userdata *)userdata;
+    struct Synth *synth = data->synth;
+
+    int16_t *stream16 = (int16_t *)stream;
+
+    for (unsigned i = 0; i < len / sizeof (int16_t); i++) {
+        synthRun(synth);
+        stream16[i] = *synth->outPtr;
+    }
+}
+
 int main(void) {
     system("clear");
     termInit();
     srandqd(42);
 
-    struct Tui tui;
-    tuiInit(&tui, "3xOsc");
-
-    struct Box oscBox1, oscBox2, oscBox3, env;
-    tuiAddBox(&tui, &oscBox1, 10, 10, 16, 8, "osc1", OUTLINE_THIN);
-    tuiAddBox(&tui, &oscBox2, 10, 20, 16, 8, "osc2", OUTLINE_THIN);
-    tuiAddBox(&tui, &oscBox3, 10, 30, 16, 8, "osc3", OUTLINE_THIN);
-    tuiAddBox(&tui, &env, 30, 10, 11, 7, "env", OUTLINE_THIN);
-
-    struct Radios shape1, shape2, shape3;
-    boxAddRadios(&oscBox1, &shape1, 1, 1, "shape");
-    boxAddRadios(&oscBox2, &shape2, 1, 1, "shape");
-    boxAddRadios(&oscBox3, &shape3, 1, 1, "shape");
-
-    radiosAddButton(&shape1, "sin", WAV_SINE);
-    radiosAddButton(&shape1, "sqr", WAV_SQUARE);
-    radiosAddButton(&shape1, "tri", WAV_TRI);
-    radiosAddButton(&shape1, "saw", WAV_SAW);
-    radiosAddButton(&shape1, "noise", WAV_NOISE);
-
-    radiosAddButton(&shape2, "sin", WAV_SINE);
-    radiosAddButton(&shape2, "sqr", WAV_SQUARE);
-    radiosAddButton(&shape2, "tri", WAV_TRI);
-    radiosAddButton(&shape2, "saw", WAV_SAW);
-    radiosAddButton(&shape2, "noise", WAV_NOISE);
-
-    radiosAddButton(&shape3, "sin", WAV_SINE);
-    radiosAddButton(&shape3, "sqr", WAV_SQUARE);
-    radiosAddButton(&shape3, "tri", WAV_TRI);
-    radiosAddButton(&shape3, "saw", WAV_SAW);
-    radiosAddButton(&shape3, "noise", WAV_NOISE);
-
-    struct Slider detune1, detune2, detune3;
-    boxAddSlider(&oscBox1, &detune1, 9, 1, 4, 0.98, 1.02, 'T');
-    boxAddSlider(&oscBox2, &detune2, 9, 1, 4, 0.98, 1.02, 'T');
-    boxAddSlider(&oscBox3, &detune3, 9, 1, 4, 0.98, 1.02, 'T');
-
-    struct Slider phase1, phase2, phase3;
-    boxAddSlider(&oscBox1, &phase1, 11, 1, 4, -180, 180, 'P');
-    boxAddSlider(&oscBox2, &phase2, 11, 1, 4, -180, 180, 'P');
-    boxAddSlider(&oscBox3, &phase3, 11, 1, 4, -180, 180, 'P');
-
-    struct Slider oscVol1, oscVol2, oscVol3;
-    boxAddSlider(&oscBox1, &oscVol1, 13, 1, 4, 0, 1, '^');
-    boxAddSlider(&oscBox2, &oscVol2, 13, 1, 4, 0, 1, '^');
-    boxAddSlider(&oscBox3, &oscVol3, 13, 1, 4, 0, 1, '^');
-
-    struct Slider attack, decay, sustain, release, drive;
-    boxAddSlider(&env, &attack, 1, 1, 4, 0, 1000, 'a');
-    boxAddSlider(&env, &decay, 3, 1, 4, 0, 1000, 'd');
-    boxAddSlider(&env, &sustain, 5, 1, 4, INT16_MIN, INT16_MAX, 's');
-    boxAddSlider(&env, &release, 7, 1, 4, 0, 2000, 'r');
-
-    boxAddSlider(&env, &drive, 9, 1, 4, 0, 2, 'G');
-
-    struct Box triggerBox;
-    struct Slider cutoffSlider;
-
-    boxAddSlider(&triggerBox, &cutoffSlider, 3, 1, 4, 0, 10000, 'C');
-
-
-    struct NoteInput input1 = {
-        .gate = 0,
-        .val = 0,
-    };
-
     struct Synth synth = {
-        .oscs = &(struct Oscillator []) {
-            [0] = {
-                .freqSample = &(int16_t) {freqToSample(300)},
-                .waveform = &(enum Waveform){WAV_TRI},
-                .phaseOffset = &(double){0},
-            },
-            [1] = {
-                .freqSample = NULL,
-            },
+        .oscs[0] = {
+            .waveform = PTR(WAV_SAW),
+            .freqSample = PTR(freqToSample(300)),
         },
-        .outPtr = &(*synth.oscs)[0].out,
+        .oscs[1] = {
+            .waveform = PTR(WAV_SQUARE),
+            .freqSample = PTR(freqToSample(400)),
+        },
+        .oscs[2] = {
+            .waveform = PTR(WAV_SINE),
+            .freqSample = PTR(freqToSample(1)),
+        },
+        .mixers[0].samplesIn = NULL_TERM_ARR(int16_t*,
+            &synth.oscs[0].out,
+            &synth.oscs[1].out
+        ),
+        .filters[0] = {
+            .sampleIn = &synth.mixers[0].out,
+            .cutoff = PTR(freqToSample(100.0)),
+            .impulseLen = 128,
+            .window = WINDOW_HAMMING,
+        },
+        .outPtr = &synth.filters[0].out,
     };
 
     struct Userdata callbackData;
     callbackData.synth = &synth;
-    callbackData.tui = &tui;
-
 
     SDL_Init(SDL_INIT_AUDIO);
 
@@ -123,7 +92,7 @@ int main(void) {
     SDL_PauseAudioDevice(audioDevice, 0);
 
 
-    while ((callbackData.curChar = getchar()) != 'q');
+    while (getchar() != 'q');
 
     SDL_Delay(50);
 

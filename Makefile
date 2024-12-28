@@ -1,6 +1,6 @@
-CFLAGS = -Wall -pedantic -Wextra -Wold-style-declaration -Wno-unused-parameter -Wstrict-prototypes -std=c99 -fsanitize=undefined
+CFLAGS = -Wall -pedantic -Wextra -Wold-style-declaration -Wstrict-prototypes -std=c11 -fsanitize=undefined -O3
 LDLIBS = -lm -lSDL2
-CC = clang
+CC = gcc
 OBJDIR = .obj
 BIN = synth
 
@@ -8,13 +8,12 @@ all: $(BIN)
 	-mv *.o $(OBJDIR)
 
 VPATH = $(OBJDIR)
-OBJS = main.o engine.o tui.o arrays.o callback.o
+OBJS = main.o engine.o tui.o arrays.o
 
 main.o: tui.h engine.h common.h callback.h
 engine.o: engine.h common.h
 tui.o: tui.h
 arrays.o: tui.h
-callback.o: callback.h
 
 $(BIN): $(OBJS)
 	$(CC) $(LDLIBS) $(CFLAGS) $^ -o $(BIN)

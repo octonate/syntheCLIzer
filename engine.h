@@ -12,14 +12,14 @@
 #define FILTER_BUF_SIZE 512
 #define MODULE_BUF_SIZE 16
 
-enum ModuleType {
-    MODULE_OSC,
-    MODULE_ENV,
-    MODULE_AMP,
-    MODULE_DIST,
-    MODULE_ATTR,
-    MODULE_MIXER,
-    MODULE_FILTER,
+enum {
+    OSCS_LEN = 16,
+    ENVS_LEN = 16,
+    AMPS_LEN = 16,
+    DISTS_LEN = 16,
+    ATTRS_LEN = 16,
+    MIXERS_LEN = 16,
+    FILTERS_LEN = 16
 };
 
 enum Waveform {
@@ -30,15 +30,7 @@ enum Waveform {
     WAV_NOISE
 };
 
-enum FilterType {
-    FIR_LOWPASS,
-    FIR_HIGHPASS,
-    FIR_BANDPASS,
-    FIR_NOTCH,
-    FIR_MOVING_AVERAGE,
-};
-
-enum firWindowType {
+enum FirWindowType {
     WINDOW_RECTANGULAR,
     WINDOW_HAMMING,
     WINDOW_HANN,
@@ -54,10 +46,13 @@ struct NoteInput {
 
 struct Oscillator {
     int16_t *freqSample;
-    enum Waveform *waveform;
+    int16_t *waveform;
     double *phaseOffset;
 
-    uint16_t t;
+    struct {
+        uint16_t t;
+    } _internal;
+
     int16_t out;
 };
 
@@ -68,9 +63,12 @@ struct Envelope {
     double *sustain;
     double *releaseMs;
 
-    bool prevGate;
-    uint32_t t;
-    int16_t releaseSample;
+    struct {
+        bool prevGate;
+        uint32_t t;
+        int16_t releaseSample;
+    } _internal;
+
     int16_t out;
 };
 
@@ -98,55 +96,37 @@ struct Mixer {
 };
 
 struct Filter {
-    int16_t samplesBuf[FILTER_BUF_SIZE];
-    double impulseResponse[FILTER_BUF_SIZE];
-    double windowBuf[FILTER_BUF_SIZE];
     int16_t *sampleIn;
     int16_t *cutoff;
-    int16_t prevCutoff;
-    int impulseLen;
-    int samplesBufIdx;
-    int16_t out;
-    enum FilterType type;
-};
+    size_t impulseLen;
+    enum FirWindowType window;
 
-struct Module {
-    enum ModuleType tag;
-    union {
-        struct Oscillator *osc;
-        struct Envelope *env;
-        struct Amplifier *amp;
-        struct Distortion *dist;
-        struct Attenuator *attr;
-        struct Mixer *mixer;
-        struct Filter *filter;
-    } ptr;
+    struct {
+        double windowBuf[FILTER_BUF_SIZE];
+        double impulseResponse[FILTER_BUF_SIZE];
+        int16_t samplesBuf[FILTER_BUF_SIZE];
+        size_t samplesBufIdx;
+        int16_t prevCutoff;
+        bool isWindowInit;
+    } _internal;
+
     int16_t out;
 };
 
 struct Synth {
-    struct NoteInput *input;
-    struct Oscillator (*oscs)[];
-    struct Envelope (*envs)[];
-    struct Amplifier (*amps)[];
-    struct Distortion (*dists)[];
-    struct Attenuator (*attrs)[];
-    struct Mixer (*mixers)[];
-    struct Filter (*filters)[];
+    struct NoteInput input;
+    struct Oscillator oscs[OSCS_LEN];
+    struct Envelope envs[ENVS_LEN];
+    struct Amplifier amps[AMPS_LEN];
+    struct Distortion dists[DISTS_LEN];
+    struct Attenuator attrs[ATTRS_LEN];
+    struct Mixer mixers[MIXERS_LEN];
+    struct Filter filters[FILTERS_LEN];
     int16_t *outPtr;
     struct Scope *scope;
 };
 
-void synthInit(struct Synth *synth);
 void synthRun(struct Synth *synth);
-
-void synthAddmixer(struct Synth *synth, struct Mixer *mixer, int16_t *samplesIn[]);
-void synthAddOsc(struct Synth *synth, struct Oscillator *osc, int16_t *freqIn, enum Waveform *waveform, double *phaseOffset);
-void synthAddAmp(struct Synth *synth, struct Amplifier *amp, int16_t *sampleIn, double *gain);
-void synthAddAttr(struct Synth *synth, struct Attenuator *attr, int16_t *sampleIn, int16_t *gainSample);
-void synthAddEnv(struct Synth *synth, struct Envelope *env, bool *gate, double *attackPtr, double *decayPtr, double *sustainPtr, double *releasePtr);
-void synthAddDist(struct Synth *synth, struct Distortion *dist, int16_t *sampleIn, double *slope);
-void synthAddFilter(struct Synth *synth, struct Filter *filter, enum firWindowType window, int16_t *sampleIn, int16_t *cutoff, int impulesLen);
 
 double sampleToFreq(int16_t sample);
 int16_t freqToSample(double freq);
