@@ -92,9 +92,9 @@ int main(void) {
         ),
         .filters[0] = {
             .sampleIn = &synth.mixers[0].out,
-            .cutoff = PTR(freqToSample(800.0)),
-            .impulseLen = 96,
-            .window = WINDOW_BLACKMAN,
+            .cutoff = PTR(freqToSample(200)),
+            .impulseLen = 256,
+            .window = WINDOW_BARTLETT,
         },
         .outPtr = &synth.filters[0].out,
     };

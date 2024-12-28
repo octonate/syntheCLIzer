@@ -7,65 +7,65 @@
 
 static uint64_t nextRand = 42;
 
-static double fmodPos(double x, double y) {
-    double result = fmod(x, y);
+static float fmodPos(float x, float y) {
+    float result = fmod(x, y);
     return (result >= 0 ? result : result + y);
 }
 
-static double sinc(double x) {
+static float sinc(float x) {
     return x == 0 ? 1 : sin(x) / x;
 }
 
 static void mixerRun(struct Mixer *mixer) {
-    double total = 0;
+    float total = 0;
     int len;
     for (len = 0; mixer->samplesIn[len] != NULL; len++) {
-        total += (double) *mixer->samplesIn[len];
+        total += (float) *mixer->samplesIn[len];
         printf("%d\n", len);
     }
     mixer->out = (total / len);
 }
 
 static void distRun(struct Distortion *distortion) {
-    double x = (double) (*distortion->sampleIn + INT16_MAX) / (INT16_MAX - INT16_MIN);
+    float x = (float) (*distortion->sampleIn + INT16_MAX) / (INT16_MAX - INT16_MIN);
     distortion->out = (INT16_MAX - INT16_MIN) * pow(x, *distortion->slope) / (pow(x, *distortion->slope) + pow(1 - x, *distortion->slope)) + INT16_MIN;
 }
 
-double sampleToFreq(int16_t sample) {
-    return exp((double) sample * log((double) SAMPLE_RATE / 2 - MIDDLE_C_FREQ) / INT16_MAX);
+float sampleToFreq(int16_t sample) {
+    return exp((float) sample * log((float) SAMPLE_RATE / 2 - MIDDLE_C_FREQ) / INT16_MAX);
 }
 
-int16_t freqToSample(double freq) {
-    return INT16_MAX * log(freq) / (log((double) SAMPLE_RATE / 2 - MIDDLE_C_FREQ));
+int16_t freqToSample(float freq) {
+    return INT16_MAX * log(freq) / (log((float) SAMPLE_RATE / 2 - MIDDLE_C_FREQ));
 }
 
-double sampleToDouble(int16_t sample, double rangeMin, double rangeMax) {
-    double doubleOut = (rangeMax + rangeMin) / 2 + sample * (double) ((int) rangeMax - (int) rangeMin) / (INT16_MAX - INT16_MIN);
+float sampleToFloat(int16_t sample, float rangeMin, float rangeMax) {
+    float floatOut = (rangeMax + rangeMin) / 2 + sample * (float) ((int) rangeMax - (int) rangeMin) / (INT16_MAX - INT16_MIN);
     // floating point is annoying
-    if (doubleOut < rangeMin) {
+    if (floatOut < rangeMin) {
         return rangeMin;
-    } else if (doubleOut > rangeMax) {
+    } else if (floatOut > rangeMax) {
         return rangeMax;
     }
 
-    return doubleOut;
+    return floatOut;
 }
 
-static int16_t oscSine(double freq, uint16_t t) {
+static int16_t oscSine(float freq, uint16_t t) {
     return INT16_MAX * sin(M_TAU * t * freq / SAMPLE_RATE);
 }
 
-static int16_t oscSquare(double freq, uint16_t t) {
+static int16_t oscSquare(float freq, uint16_t t) {
     return (t < SAMPLE_RATE / freq / 2 ? INT16_MAX : INT16_MIN);
 }
 
-static int16_t oscSaw(double freq, uint16_t t) {
-    double period = SAMPLE_RATE / freq;
+static int16_t oscSaw(float freq, uint16_t t) {
+    float period = SAMPLE_RATE / freq;
     return INT16_MAX * (2 * fmod(t, period) / period - 1);
 }
 
-static int16_t oscTri(double freq, uint16_t t) {
-    double period = SAMPLE_RATE / freq;
+static int16_t oscTri(float freq, uint16_t t) {
+    float period = SAMPLE_RATE / freq;
     return INT16_MAX * ((4.0 * fmodPos((t < period / 2 ? t : -t), period) / period) - 1);
 }
 
@@ -84,8 +84,8 @@ static void oscRun(struct Oscillator *osc) {
         return;
     }
 
-    double freq = sampleToFreq(*osc->freqSample);
-    double period = SAMPLE_RATE / freq;
+    float freq = sampleToFreq(*osc->freqSample);
+    float period = SAMPLE_RATE / freq;
     int16_t sample = INT16_MIN;
     if (osc->_internal.t > period) {
         osc->_internal.t = 0;
@@ -116,7 +116,7 @@ static void oscRun(struct Oscillator *osc) {
 }
 
 static void ampRun(struct Amplifier *amp) {
-    double sampleOut = (double) *amp->sampleIn * *amp->gain;
+    float sampleOut = (float) *amp->sampleIn * *amp->gain;
     if (sampleOut > INT16_MAX) {
         amp->out = INT16_MAX;
     } else if (sampleOut < INT16_MIN) {
@@ -127,13 +127,13 @@ static void ampRun(struct Amplifier *amp) {
 }
 
 static void attrRun(struct Attenuator *attr) {
-    attr->out = *attr->sampleIn * (double) (*attr->amount - INT16_MIN) / (INT16_MAX - INT16_MIN);
+    attr->out = *attr->sampleIn * (float) (*attr->amount - INT16_MIN) / (INT16_MAX - INT16_MIN);
 }
 
 static void envRun(struct Envelope *env) {
-    uint32_t attackPeriod = *env->attackMs * (double) SAMPLE_RATE / 1000;
-    uint32_t decayPeriod = *env->decayMs * (double) SAMPLE_RATE / 1000;
-    uint32_t releasePeriod = *env->releaseMs * (double) SAMPLE_RATE / 1000;
+    uint32_t attackPeriod = *env->attackMs * (float) SAMPLE_RATE / 1000;
+    uint32_t decayPeriod = *env->decayMs * (float) SAMPLE_RATE / 1000;
+    uint32_t releasePeriod = *env->releaseMs * (float) SAMPLE_RATE / 1000;
     int16_t sample;
 
     int16_t sustain = *env->sustain;
@@ -174,25 +174,25 @@ static void envRun(struct Envelope *env) {
     env->out = sample;
 }
 
-static void rectangularWindow(double *windowBuf, int impulseLen) {
+static void rectangularWindow(float *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
         windowBuf[i] = 1;
     }
 }
 
-static void hannWindow(double *windowBuf, int impulseLen) {
+static void hannWindow(float *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
         windowBuf[i] = 0.5 * (1 - cos(M_TAU * i / (impulseLen - 1)));
     }
 }
 
-static void hammingWindow(double *windowBuf, int impulseLen) {
+static void hammingWindow(float *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
         windowBuf[i] = 0.54 - 0.46 * cos(M_TAU * i / (impulseLen - 1));
     }
 }
 
-static void bartlettWindow(double *windowBuf, int impulseLen) {
+static void bartlettWindow(float *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
         if (i < (impulseLen - 1) / 2) {
             windowBuf[i] = 2.0 * i / (impulseLen - 1);
@@ -202,13 +202,13 @@ static void bartlettWindow(double *windowBuf, int impulseLen) {
     }
 }
 
-static void blackmanWindow(double *windowBuf, int impulseLen) {
+static void blackmanWindow(float *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
         windowBuf[i] = 0.42 - 0.5 * cos(M_TAU * i / (impulseLen - 1) + 0.08 * cos(2 * M_TAU * i / (impulseLen - 1)));
     }
 }
 
-static void createFirWindow(double windowBuf[FILTER_BUF_SIZE], enum FirWindowType window, size_t impulseLen) {
+static void createFirWindow(float windowBuf[FILTER_BUF_SIZE], enum FirWindowType window, size_t impulseLen) {
     switch (window) {
     case WINDOW_RECTANGULAR:
         rectangularWindow(windowBuf, impulseLen);
@@ -239,11 +239,11 @@ static void filterRun(struct Filter *filter) {
     }
 
     if (*filter->cutoff != filter->_internal.prevCutoff) {
-        double cutoffFreq = sampleToFreq(*filter->cutoff);
-        double responseSum = 0;
+        float cutoffFreq = sampleToFreq(*filter->cutoff);
+        float responseSum = 0;
 
         for (size_t i = 0; i < filter->impulseLen; i++) {
-            double nextImpulse = filter->_internal.windowBuf[i] * sinc(M_TAU * cutoffFreq / SAMPLE_RATE * ((double) i - (double) (filter->impulseLen - 1) / 2));
+            float nextImpulse = filter->_internal.windowBuf[i] * sinc(M_TAU * cutoffFreq / SAMPLE_RATE * ((float) i - (float) (filter->impulseLen - 1) / 2));
             filter->_internal.impulseResponse[i] = nextImpulse;
             responseSum += nextImpulse;
         }
@@ -253,14 +253,14 @@ static void filterRun(struct Filter *filter) {
         }
     }
 
-    double sampleOut = 0;
+    float sampleOut = 0;
     int sumIdx = filter->_internal.samplesBufIdx;
 
     for (size_t i = 0; i < filter->impulseLen; i++) {
         if (--sumIdx < 0) {
             sumIdx = filter->impulseLen - 1;
         }
-        sampleOut += (double) filter->_internal.samplesBuf[sumIdx] * filter->_internal.impulseResponse[i];
+        sampleOut += (float) filter->_internal.samplesBuf[sumIdx] * filter->_internal.impulseResponse[i];
     }
 
     filter->_internal.prevCutoff = *filter->cutoff;

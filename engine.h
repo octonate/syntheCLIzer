@@ -47,7 +47,7 @@ struct NoteInput {
 struct Oscillator {
     int16_t *freqSample;
     int16_t *waveform;
-    double *phaseOffset;
+    float *phaseOffset;
 
     struct {
         uint16_t t;
@@ -58,10 +58,10 @@ struct Oscillator {
 
 struct Envelope {
     bool *gate;
-    double *attackMs;
-    double *decayMs;
-    double *sustain;
-    double *releaseMs;
+    float *attackMs;
+    float *decayMs;
+    float *sustain;
+    float *releaseMs;
 
     struct {
         bool prevGate;
@@ -74,13 +74,13 @@ struct Envelope {
 
 struct Amplifier {
     int16_t *sampleIn;
-    double *gain;
+    float *gain;
     int16_t out;
 };
 
 struct Distortion {
     int16_t *sampleIn;
-    double *slope;
+    float *slope;
     int16_t out;
 };
 
@@ -102,8 +102,8 @@ struct Filter {
     enum FirWindowType window;
 
     struct {
-        double windowBuf[FILTER_BUF_SIZE];
-        double impulseResponse[FILTER_BUF_SIZE];
+        float windowBuf[FILTER_BUF_SIZE];
+        float impulseResponse[FILTER_BUF_SIZE];
         int16_t samplesBuf[FILTER_BUF_SIZE];
         size_t samplesBufIdx;
         int16_t prevCutoff;
@@ -128,9 +128,9 @@ struct Synth {
 
 void synthRun(struct Synth *synth);
 
-double sampleToFreq(int16_t sample);
-int16_t freqToSample(double freq);
-double sampleToDouble(int16_t sample, double rangeMin, double rangeMax);
+float sampleToFreq(int16_t sample);
+int16_t freqToSample(float freq);
+float sampleToFloat(int16_t sample, float rangeMin, float rangeMax);
 
 void srandqd(int32_t seed);
 
