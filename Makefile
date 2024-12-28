@@ -1,4 +1,4 @@
-CFLAGS = -Wall -Wno-unused-command-line-argument -pedantic -pedantic-errors -Wextra -Wstrict-prototypes -std=c11 -O3
+CFLAGS = -Wall -Wno-unused-command-line-argument -pedantic -pedantic-errors -Wextra -Wstrict-prototypes -std=c99 -O3
 DBGFLAGS = -fsanitize=undefined
 LDLIBS = -lm -lSDL2
 CC = gcc

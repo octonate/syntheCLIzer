@@ -9,11 +9,7 @@
 
 #define NULL_TERM_ARR(type, ...) (type[]) {__VA_ARGS__, NULL}
 
-#define PTR(x) _Generic((x), \
-    int16_t: &(int16_t){x}, \
-    int: &(int16_t){x}, \
-    double: &(double){x}, \
-    default: &(int16_t){x})
+#define PTR(x) &(int16_t){x}
 
 
 SDL_AudioDeviceID audioDevice;
