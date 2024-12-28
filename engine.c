@@ -8,12 +8,12 @@
 static uint64_t nextRand = 42;
 
 static float fmodPos(float x, float y) {
-    float result = fmod(x, y);
+    float result = fmodf(x, y);
     return (result >= 0 ? result : result + y);
 }
 
 static float sinc(float x) {
-    return x == 0 ? 1 : sin(x) / x;
+    return x == 0 ? 1 : sinf(x) / x;
 }
 
 static void mixerRun(struct Mixer *mixer) {
@@ -28,15 +28,15 @@ static void mixerRun(struct Mixer *mixer) {
 
 static void distRun(struct Distortion *distortion) {
     float x = (float) (*distortion->sampleIn + INT16_MAX) / (INT16_MAX - INT16_MIN);
-    distortion->out = (INT16_MAX - INT16_MIN) * pow(x, *distortion->slope) / (pow(x, *distortion->slope) + pow(1 - x, *distortion->slope)) + INT16_MIN;
+    distortion->out = (INT16_MAX - INT16_MIN) * powf(x, *distortion->slope) / (powf(x, *distortion->slope) + powf(1 - x, *distortion->slope)) + INT16_MIN;
 }
 
 float sampleToFreq(int16_t sample) {
-    return exp((float) sample * log((float) SAMPLE_RATE / 2 - MIDDLE_C_FREQ) / INT16_MAX);
+    return expf((float) sample * logf((float) SAMPLE_RATE / 2 - MIDDLE_C_FREQ) / INT16_MAX);
 }
 
 int16_t freqToSample(float freq) {
-    return INT16_MAX * log(freq) / (log((float) SAMPLE_RATE / 2 - MIDDLE_C_FREQ));
+    return INT16_MAX * logf(freq) / (logf((float) SAMPLE_RATE / 2 - MIDDLE_C_FREQ));
 }
 
 float sampleToFloat(int16_t sample, float rangeMin, float rangeMax) {
@@ -52,7 +52,7 @@ float sampleToFloat(int16_t sample, float rangeMin, float rangeMax) {
 }
 
 static int16_t oscSine(float freq, uint16_t t) {
-    return INT16_MAX * sin(M_TAU * t * freq / SAMPLE_RATE);
+    return INT16_MAX * sinf(M_TAU * t * freq / SAMPLE_RATE);
 }
 
 static int16_t oscSquare(float freq, uint16_t t) {
@@ -182,13 +182,13 @@ static void rectangularWindow(float *windowBuf, int impulseLen) {
 
 static void hannWindow(float *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
-        windowBuf[i] = 0.5 * (1 - cos(M_TAU * i / (impulseLen - 1)));
+        windowBuf[i] = 0.5 * (1 - cosf(M_TAU * i / (impulseLen - 1)));
     }
 }
 
 static void hammingWindow(float *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
-        windowBuf[i] = 0.54 - 0.46 * cos(M_TAU * i / (impulseLen - 1));
+        windowBuf[i] = 0.54 - 0.46 * cosf(M_TAU * i / (impulseLen - 1));
     }
 }
 
@@ -204,7 +204,7 @@ static void bartlettWindow(float *windowBuf, int impulseLen) {
 
 static void blackmanWindow(float *windowBuf, int impulseLen) {
     for (int i = 0; i < impulseLen; i++) {
-        windowBuf[i] = 0.42 - 0.5 * cos(M_TAU * i / (impulseLen - 1) + 0.08 * cos(2 * M_TAU * i / (impulseLen - 1)));
+        windowBuf[i] = 0.42 - 0.5 * cosf(M_TAU * i / (impulseLen - 1) + 0.08 * cosf(2 * M_TAU * i / (impulseLen - 1)));
     }
 }
 

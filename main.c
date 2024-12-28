@@ -10,6 +10,7 @@
 #define NULL_TERM_ARR(type, ...) (type[]) {__VA_ARGS__, NULL}
 
 #define PTR(x) &(int16_t){x}
+#define PTRF(x) &(float){x}
 
 
 SDL_AudioDeviceID audioDevice;
@@ -18,28 +19,27 @@ SDL_AudioSpec audioSpec;
 
 struct Userdata {
     struct Synth *synth;
+    int16_t inputFreq;
+    bool gate;
+    int curChar;
 };
 
 
 void audioCallback(void *userdata, uint8_t *stream, int len) {
     struct Userdata *data = (struct Userdata *)userdata;
-    struct Synth *synth = data->synth;
 
     int16_t *stream16 = (int16_t *)stream;
 
     for (size_t i = 0; i < len / sizeof(int16_t); i++) {
-        //switch (data->curChar) {
-        //case '\0':
-        //    break;
-        //case '[':
-        //    synth->input->gate = true;
-        //    break;
-        //case ']':
-        //    synth->input->gate = false;
-        //    break;
-        //case 'q':
-        //    data->quit = true;
-        //    break;
+        switch (data->curChar) {
+        case '\0':
+            break;
+        case '[':
+            data->gate = true;
+            break;
+        case ']':
+            data->gate = false;
+            break;
         //case 'k':
         //    boxIncrFocElement(tui->boxes[tui->focBoxIdx]);
         //    break;
@@ -58,13 +58,13 @@ void audioCallback(void *userdata, uint8_t *stream, int len) {
         //case 'L':
         //    tuiNextBox(tui);
         //    break;
-        //default:
-        //    synth->input->gate = true;
-        //    synth->input->val = freqToSample(100 * pow(2, (double) (data->curChar - 48) / 12));
-        //}
-        //
-        synthRun(synth);
-        stream16[i] = *synth->outPtr;
+        default:
+            data->gate = true;
+            data->inputFreq = freqToSample(100 * powf(2, (float) (data->curChar - 48) / 12));
+            break;
+        }
+        synthRun(data->synth);
+        stream16[i] = *data->synth->outPtr;
     }
 }
 
@@ -73,10 +73,12 @@ int main(void) {
     termInit();
     srandqd(42);
 
+    struct Userdata callbackData = {0};
+
     struct Synth synth = {
         .oscs[0] = {
             .waveform = PTR(WAV_SAW),
-            .freqSample = PTR(freqToSample(300)),
+            .freqSample = &callbackData.inputFreq,
         },
         .oscs[1] = {
             .waveform = PTR(WAV_SQUARE),
@@ -92,14 +94,13 @@ int main(void) {
         ),
         .filters[0] = {
             .sampleIn = &synth.mixers[0].out,
-            .cutoff = PTR(freqToSample(200)),
+            .cutoff = PTR(freqToSample(2000)),
             .impulseLen = 256,
             .window = WINDOW_BARTLETT,
         },
         .outPtr = &synth.filters[0].out,
     };
 
-    struct Userdata callbackData;
     callbackData.synth = &synth;
 
     SDL_Init(SDL_INIT_AUDIO);
@@ -117,7 +118,9 @@ int main(void) {
     SDL_PauseAudioDevice(audioDevice, 0);
 
 
-    while (getchar() != 'q');
+    while (callbackData.curChar != 'q') {
+        callbackData.curChar = getchar();
+    }
 
     SDL_Delay(50);
 

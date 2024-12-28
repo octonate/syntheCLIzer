@@ -114,7 +114,6 @@ struct Filter {
 };
 
 struct Synth {
-    struct NoteInput input;
     struct Oscillator oscs[OSCS_LEN];
     struct Envelope envs[ENVS_LEN];
     struct Amplifier amps[AMPS_LEN];
