@@ -1,6 +1,7 @@
-CFLAGS = -Wall -Wno-unused-command-line-argument -pedantic -pedantic-errors -Wextra -Wstrict-prototypes -std=c11 -fsanitize=undefined
+CFLAGS = -Wall -Wno-unused-command-line-argument -pedantic -pedantic-errors -Wextra -Wstrict-prototypes -std=c11 -O3
+DBGFLAGS = -fsanitize=undefined
 LDLIBS = -lm -lSDL2
-CC = clang
+CC = gcc
 OBJDIR = .obj
 BIN = synth
 
@@ -24,9 +25,12 @@ $(BIN): $(OBJS)
 $(OBJDIR): 
 	mkdir $(OBJDIR)
 
+debug: CFLAGS += $(DBGFLAGS)
+debug: all
+
 clean:
 	rm $(OBJDIR)/*.o
 	rmdir $(OBJDIR)
 	rm $(BIN)
 
-.PHONY: all clean
+.PHONY: all clean debug
