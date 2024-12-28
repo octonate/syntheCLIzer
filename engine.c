@@ -1,13 +1,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <SDL2/SDL_audio.h>
-#include <SDL2/SDL.h>
-#include <err.h>
 
 #include "engine.h"
 
-uint64_t nextRand = 42;
+static uint64_t nextRand = 42;
 
 static double fmodPos(double x, double y) {
     double result = fmod(x, y);
