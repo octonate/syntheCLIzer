@@ -1,8 +1,9 @@
 #ifndef TUI_H
 #define TUI_H
 
-#include "common.h"
 #include "engine.h"
+
+#define LIST_BUF_SIZE 64
 
 #define TEXT_BOLD "\033[1m"
 #define TEXT_RESET "\033[0m"

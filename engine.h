@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "common.h"
+#define M_TAU 6.28318530717958647692
 
 #define SAMPLE_RATE 44100
 #define STREAM_BUF_SIZE 1024

@@ -10,8 +10,8 @@ all: $(BIN)
 VPATH = $(OBJDIR)
 OBJS = main.o engine.o tui.o arrays.o
 
-main.o: tui.h engine.h common.h callback.h
-engine.o: engine.h common.h
+main.o: tui.h engine.h
+engine.o: engine.h
 tui.o: tui.h
 arrays.o: tui.h
 
