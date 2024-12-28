@@ -1,6 +1,6 @@
-CFLAGS = -Wall -pedantic -Wextra -Wold-style-declaration -Wstrict-prototypes -std=c11 -fsanitize=undefined -O3
+CFLAGS = -Wall -Wno-unused-command-line-argument -pedantic -pedantic-errors -Wextra -Wstrict-prototypes -std=c11 -fsanitize=undefined
 LDLIBS = -lm -lSDL2
-CC = gcc
+CC = clang
 OBJDIR = .obj
 BIN = synth
 
