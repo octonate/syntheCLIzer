@@ -62,7 +62,7 @@ void audioCallback(void *userdata, uint8_t *stream, int len) {
             data->gate = true;
             data->inputFreq = freqToSample(100 * powf(2, (float) (data->curChar - 48) / 12));
             break;
-        }
+      }
         synthRun(data->synth);
         stream16[i] = *data->synth->outPtr;
     }
@@ -76,28 +76,26 @@ int main(void) {
     struct Userdata callbackData = {0};
 
     struct Synth synth = {
-        .oscs[0] = {
-            .waveform = PTR(WAV_SAW),
-            .freqSample = &callbackData.inputFreq,
-        },
-        .oscs[1] = {
-            .waveform = PTR(WAV_SQUARE),
-            .freqSample = PTR(freqToSample(400)),
-        },
-        .oscs[2] = {
-            .waveform = PTR(WAV_NOISE),
-        },
-        .mixers[0].samplesIn = NULL_TERM_ARR(int16_t*,
-            &synth.oscs[0].out,
-            &synth.oscs[1].out,
-            &synth.oscs[2].out
-        ),
+        .oscs[0] = { &callbackData.inputFreq, PTR(WAV_TRI) },
+        .oscs[1] = { PTR(freqToSample(200)), PTR(WAV_SINE) },
+
+        .mixers[0].samplesIn = NULL_TERM_ARR(int16_t*, &synth.oscs[0].out, &synth.oscs[1].out),
+
         .filters[0] = {
             .sampleIn = &synth.mixers[0].out,
-            .cutoff = PTR(freqToSample(2000)),
-            .impulseLen = 256,
-            .window = WINDOW_BARTLETT,
+            .cutoff = PTR(freqToSample(20000)),
+            .impulseLen = 55,
+            .window = WINDOW_HAMMING,
         },
+
+        .envs[0] = {
+            .gate = &callbackData.gate,
+            .attackMs = PTRF(100),
+            .decayMs = PTRF(500),
+            .sustain = PTRF(freqToSample(100)),
+            .releaseMs = PTRF(1000),
+        },
+
         .outPtr = &synth.filters[0].out,
     };
 

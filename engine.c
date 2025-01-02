@@ -17,13 +17,12 @@ static float sinc(float x) {
 }
 
 static void mixerRun(struct Mixer *mixer) {
-    float total = 0;
-    int len;
+    int32_t total = 0;
+    size_t len;
     for (len = 0; mixer->samplesIn[len] != NULL; len++) {
-        total += (float) *mixer->samplesIn[len];
-        printf("%d\n", len);
+        total += *mixer->samplesIn[len];
     }
-    mixer->out = (total / len);
+    mixer->out = total / len;
 }
 
 static void distRun(struct Distortion *distortion) {
@@ -51,6 +50,13 @@ float sampleToFloat(int16_t sample, float rangeMin, float rangeMax) {
     return floatOut;
 }
 
+int16_t floatToAmt(float amt) {
+    if (amt >= 1) return INT16_MAX;
+    if (amt <= 0) return INT16_MIN;
+
+    return amt * (INT16_MAX - INT16_MIN) + INT16_MIN;
+}
+
 static int16_t oscSine(float freq, uint16_t t) {
     return INT16_MAX * sinf(M_TAU * t * freq / SAMPLE_RATE);
 }
@@ -61,7 +67,7 @@ static int16_t oscSquare(float freq, uint16_t t) {
 
 static int16_t oscSaw(float freq, uint16_t t) {
     float period = SAMPLE_RATE / freq;
-    return INT16_MAX * (2 * fmod(t, period) / period - 1);
+    return INT16_MAX * (2 * fmodf(t, period) / period - 1);
 }
 
 static int16_t oscTri(float freq, uint16_t t) {
@@ -87,11 +93,11 @@ static void oscRun(struct Oscillator *osc) {
     float freq = sampleToFreq(*osc->freqSample);
     float period = SAMPLE_RATE / freq;
     int16_t sample = INT16_MIN;
-    if (osc->_internal.t > period) {
-        osc->_internal.t = 0;
+    if (osc->_priv.t > period) {
+        osc->_priv.t = 0;
     }
 
-    uint32_t tOffset = osc->_internal.t;
+    uint32_t tOffset = osc->_priv.t;
     if (osc->phaseOffset != NULL) {
         tOffset += SAMPLE_RATE * fmodPos(*osc->phaseOffset, 360) / (360 * freq);
         tOffset = tOffset % (uint16_t) period;
@@ -111,7 +117,7 @@ static void oscRun(struct Oscillator *osc) {
         sample = oscSaw(freq, tOffset);
         break;
     }
-    osc->_internal.t += 1;
+    osc->_priv.t += 1;
     osc->out = sample;
 }
 
@@ -138,21 +144,21 @@ static void envRun(struct Envelope *env) {
 
     int16_t sustain = *env->sustain;
 
-    if (*env->gate == true && env->_internal.prevGate == false) {
-        env->_internal.t = 0;
+    if (*env->gate == true && env->_priv.prevGate == false) {
+        env->_priv.t = 0;
     }
-    if (*env->gate == false && env->_internal.prevGate == true) {
-        env->_internal.t = attackPeriod + decayPeriod;
-        env->_internal.releaseSample = env->out;
+    if (*env->gate == false && env->_priv.prevGate == true) {
+        env->_priv.t = attackPeriod + decayPeriod;
+        env->_priv.releaseSample = env->out;
     }
 
-    env->_internal.prevGate = *env->gate;
+    env->_priv.prevGate = *env->gate;
 
     if (*env->gate == false) {
         // release case
-        if (env->_internal.t >= attackPeriod + decayPeriod && env->_internal.t < attackPeriod + decayPeriod + releasePeriod) {
-            sample = (int16_t) (env->_internal.releaseSample - (env->_internal.t - attackPeriod - decayPeriod) * (env->_internal.releaseSample - INT16_MIN) / releasePeriod);
-            env->_internal.t += 1;
+        if (env->_priv.t >= attackPeriod + decayPeriod && env->_priv.t < attackPeriod + decayPeriod + releasePeriod) {
+            sample = (int16_t) (env->_priv.releaseSample - (env->_priv.t - attackPeriod - decayPeriod) * (env->_priv.releaseSample - INT16_MIN) / releasePeriod);
+            env->_priv.t += 1;
             env->out = sample;
         } else {
             env->out = INT16_MIN;
@@ -161,12 +167,12 @@ static void envRun(struct Envelope *env) {
         return;
     }
 
-    if (env->_internal.t < attackPeriod) {
-        sample = env->_internal.t * 2 * INT16_MAX / attackPeriod + INT16_MIN;
-        env->_internal.t += 1;
-    } else if (env->_internal.t < attackPeriod + decayPeriod) {
-        sample = INT16_MAX - (env->_internal.t - attackPeriod) * (INT16_MAX - sustain) / decayPeriod;
-        env->_internal.t += 1;
+    if (env->_priv.t < attackPeriod) {
+        sample = env->_priv.t * 2 * INT16_MAX / attackPeriod + INT16_MIN;
+        env->_priv.t += 1;
+    } else if (env->_priv.t < attackPeriod + decayPeriod) {
+        sample = INT16_MAX - (env->_priv.t - attackPeriod) * (INT16_MAX - sustain) / decayPeriod;
+        env->_priv.t += 1;
     } else {
         sample = sustain;
     } 
@@ -174,37 +180,37 @@ static void envRun(struct Envelope *env) {
     env->out = sample;
 }
 
-static void rectangularWindow(float *windowBuf, int impulseLen) {
-    for (int i = 0; i < impulseLen; i++) {
-        windowBuf[i] = 1;
+static void rectangularWindow(float *windowBuf, size_t impulseLen) {
+    for (size_t i = 0; i < impulseLen; i++) {
+        windowBuf[i] = 1.0f;
     }
 }
 
-static void hannWindow(float *windowBuf, int impulseLen) {
-    for (int i = 0; i < impulseLen; i++) {
-        windowBuf[i] = 0.5 * (1 - cosf(M_TAU * i / (impulseLen - 1)));
+static void hannWindow(float *windowBuf, size_t impulseLen) {
+    for (size_t i = 0; i < impulseLen; i++) {
+        windowBuf[i] = 0.5f * (1.0f - cosf(M_TAU * i / (impulseLen - 1)));
     }
 }
 
-static void hammingWindow(float *windowBuf, int impulseLen) {
-    for (int i = 0; i < impulseLen; i++) {
-        windowBuf[i] = 0.54 - 0.46 * cosf(M_TAU * i / (impulseLen - 1));
+static void hammingWindow(float *windowBuf, size_t impulseLen) {
+    for (size_t i = 0; i < impulseLen; i++) {
+        windowBuf[i] = 0.54f - 0.46f * cosf(M_TAU * i / (impulseLen - 1));
     }
 }
 
-static void bartlettWindow(float *windowBuf, int impulseLen) {
-    for (int i = 0; i < impulseLen; i++) {
+static void bartlettWindow(float *windowBuf, size_t impulseLen) {
+    for (size_t i = 0; i < impulseLen; i++) {
         if (i < (impulseLen - 1) / 2) {
-            windowBuf[i] = 2.0 * i / (impulseLen - 1);
+            windowBuf[i] = 2.0f * i / (impulseLen - 1);
         } else {
-            windowBuf[i] =  2.0 - 2.0 * i / (impulseLen - 1);
+            windowBuf[i] =  2.0f - 2.0f * i / (impulseLen - 1);
         }
     }
 }
 
-static void blackmanWindow(float *windowBuf, int impulseLen) {
-    for (int i = 0; i < impulseLen; i++) {
-        windowBuf[i] = 0.42 - 0.5 * cosf(M_TAU * i / (impulseLen - 1) + 0.08 * cosf(2 * M_TAU * i / (impulseLen - 1)));
+static void blackmanWindow(float *windowBuf, size_t impulseLen) {
+    for (size_t i = 0; i < impulseLen; i++) {
+        windowBuf[i] = 0.42 - 0.5 * cosf(M_TAU * i / (impulseLen - 1) + 0.08f * cosf(2.0f * M_TAU * i / (impulseLen - 1)));
     }
 }
 
@@ -229,64 +235,64 @@ static void createFirWindow(float windowBuf[FILTER_BUF_SIZE], enum FirWindowType
 }
 
 static void filterRun(struct Filter *filter) {
-    if (filter->_internal.isWindowInit == false) {
-        createFirWindow(filter->_internal.windowBuf, filter->window, filter->impulseLen);
-        filter->_internal.isWindowInit = true;
+    if (filter->_priv.isWindowInit == false) {
+        createFirWindow(filter->_priv.windowBuf, filter->window, filter->impulseLen);
+        filter->_priv.isWindowInit = true;
     }
-    filter->_internal.samplesBuf[filter->_internal.samplesBufIdx] = *filter->sampleIn;
-    if (++filter->_internal.samplesBufIdx == filter->impulseLen) {
-        filter->_internal.samplesBufIdx = 0;
+    filter->_priv.samplesBuf[filter->_priv.samplesBufIdx] = *filter->sampleIn;
+    if (++filter->_priv.samplesBufIdx == filter->impulseLen) {
+        filter->_priv.samplesBufIdx = 0;
     }
 
-    if (*filter->cutoff != filter->_internal.prevCutoff) {
+    if (*filter->cutoff != filter->_priv.prevCutoff) {
         float cutoffFreq = sampleToFreq(*filter->cutoff);
         float responseSum = 0;
 
         for (size_t i = 0; i < filter->impulseLen; i++) {
-            float nextImpulse = filter->_internal.windowBuf[i] * sinc(M_TAU * cutoffFreq / SAMPLE_RATE * ((float) i - (float) (filter->impulseLen - 1) / 2));
-            filter->_internal.impulseResponse[i] = nextImpulse;
+            float nextImpulse = filter->_priv.windowBuf[i] * sinc(M_TAU * cutoffFreq / SAMPLE_RATE * ((float) i - (float) (filter->impulseLen - 1) / 2));
+            filter->_priv.impulseResponse[i] = nextImpulse;
             responseSum += nextImpulse;
         }
 
         for (size_t i = 0; i < filter->impulseLen; i++) {
-            filter->_internal.impulseResponse[i] /= responseSum;
+            filter->_priv.impulseResponse[i] /= responseSum;
         }
     }
 
     float sampleOut = 0;
-    int sumIdx = filter->_internal.samplesBufIdx;
+    size_t sumIdx = filter->_priv.samplesBufIdx;
 
     for (size_t i = 0; i < filter->impulseLen; i++) {
-        if (--sumIdx < 0) {
+        if (--sumIdx == SIZE_MAX) {
             sumIdx = filter->impulseLen - 1;
         }
-        sampleOut += (float) filter->_internal.samplesBuf[sumIdx] * filter->_internal.impulseResponse[i];
+        sampleOut += filter->_priv.samplesBuf[sumIdx] * filter->_priv.impulseResponse[i];
     }
 
-    filter->_internal.prevCutoff = *filter->cutoff;
+    filter->_priv.prevCutoff = *filter->cutoff;
     filter->out = sampleOut;
 }
 
 void synthRun(struct Synth *synth) {
-    for (int i = 0; synth->amps[i].sampleIn != NULL && i < AMPS_LEN; i++) {
+    for (size_t i = 0; synth->amps[i].sampleIn != NULL && i < AMPS_LEN; i++) {
         ampRun(&synth->amps[i]);
     }
-    for (int i = 0; synth->oscs[i].waveform != NULL && i < OSCS_LEN; i++) {
+    for (size_t i = 0; synth->oscs[i].waveform != NULL && i < OSCS_LEN; i++) {
         oscRun(&synth->oscs[i]);
     }
-    for (int i = 0; synth->mixers[i].samplesIn != NULL && i < MIXERS_LEN; i++) {
+    for (size_t i = 0; synth->mixers[i].samplesIn != NULL && i < MIXERS_LEN; i++) {
         mixerRun(&synth->mixers[i]);
     }
-    for (int i = 0; synth->filters[i].sampleIn != NULL && i < FILTERS_LEN; i++) {
+    for (size_t i = 0; synth->filters[i].sampleIn != NULL && i < FILTERS_LEN; i++) {
         filterRun(&synth->filters[i]);
     }
-    for (int i = 0; synth->envs[i].gate != NULL && i < ENVS_LEN; i++) {
+    for (size_t i = 0; synth->envs[i].gate != NULL && i < ENVS_LEN; i++) {
         envRun(&synth->envs[i]);
     }
-    for (int i = 0; synth->dists[i].sampleIn != NULL && i < DISTS_LEN; i++) {
+    for (size_t i = 0; synth->dists[i].sampleIn != NULL && i < DISTS_LEN; i++) {
         distRun(&synth->dists[i]);
     }
-    for (int i = 0; synth->attrs[i].sampleIn != NULL && i < ATTRS_LEN; i++) {
+    for (size_t i = 0; synth->attrs[i].sampleIn != NULL && i < ATTRS_LEN; i++) {
         attrRun(&synth->attrs[i]);
     }
 }

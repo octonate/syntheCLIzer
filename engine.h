@@ -51,7 +51,7 @@ struct Oscillator {
 
     struct {
         uint16_t t;
-    } _internal;
+    } _priv;
 
     int16_t out;
 };
@@ -67,7 +67,7 @@ struct Envelope {
         bool prevGate;
         uint32_t t;
         int16_t releaseSample;
-    } _internal;
+    } _priv;
 
     int16_t out;
 };
@@ -108,7 +108,7 @@ struct Filter {
         size_t samplesBufIdx;
         int16_t prevCutoff;
         bool isWindowInit;
-    } _internal;
+    } _priv;
 
     int16_t out;
 };
@@ -130,6 +130,7 @@ void synthRun(struct Synth *synth);
 float sampleToFreq(int16_t sample);
 int16_t freqToSample(float freq);
 float sampleToFloat(int16_t sample, float rangeMin, float rangeMax);
+int16_t floatToAmt(float amt);
 
 void srandqd(int32_t seed);
 
