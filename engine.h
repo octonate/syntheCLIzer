@@ -108,7 +108,6 @@ struct Filter {
         int16_t samplesBuf[FILTER_BUF_SIZE];
         size_t samplesBufIdx;
         int16_t prevCutoff;
-        bool isWindowInit;
     } _priv;
 
     int16_t out;
@@ -123,6 +122,9 @@ struct Synth {
     struct Mixer mixers[MIXERS_LEN];
     struct Filter filters[FILTERS_LEN];
     struct Scope *scope;
+    struct {
+        bool isInit;
+    } _priv;
     int16_t *outPtr;
 };
 

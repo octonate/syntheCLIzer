@@ -221,10 +221,6 @@ static void createFirWindow(float windowBuf[FILTER_BUF_SIZE], enum FirWindowType
 }
 
 static void filterRun(struct Filter *filter) {
-    if (filter->_priv.isWindowInit == false) {
-        createFirWindow(filter->_priv.windowBuf, filter->window, filter->impulseLen);
-        filter->_priv.isWindowInit = true;
-    }
     filter->_priv.samplesBuf[filter->_priv.samplesBufIdx] = *filter->sampleIn;
     if (++filter->_priv.samplesBufIdx == filter->impulseLen) {
         filter->_priv.samplesBufIdx = 0;
@@ -235,7 +231,7 @@ static void filterRun(struct Filter *filter) {
         float responseSum = 0;
 
         for (size_t i = 0; i < filter->impulseLen; i++) {
-            float nextImpulse = filter->_priv.windowBuf[i] * sinc(M_TAU * cutoffFreq / SAMPLE_RATE * ((float) i - (float) (filter->impulseLen - 1) / 2));
+            float nextImpulse = filter->_priv.windowBuf[i] * sinc(M_TAU * cutoffFreq / SAMPLE_RATE * (i - (filter->impulseLen - 1) / 2.0f));
             filter->_priv.impulseResponse[i] = nextImpulse;
             responseSum += nextImpulse;
         }
@@ -259,7 +255,18 @@ static void filterRun(struct Filter *filter) {
     filter->out = sampleOut;
 }
 
+static void synthInit(struct Synth *synth) {
+    for (size_t i = 0; i < FILTERS_LEN; i++) {
+        struct Filter *filter = &synth->filters[i];
+        createFirWindow(filter->_priv.windowBuf, filter->window, filter->impulseLen);
+    }
+}
+
 void synthRun(struct Synth *synth) {
+    if (synth->_priv.isInit == false) {
+        synthInit(synth);
+        synth->_priv.isInit = true;
+    }
     for (size_t i = 0; synth->amps[i].sampleIn != NULL && i < AMPS_LEN; i++) {
         ampRun(&synth->amps[i]);
     }

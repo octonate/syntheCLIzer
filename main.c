@@ -93,7 +93,7 @@ int main(void) {
             .sampleIn = &synth.mixers[0].out,
             .cutoff = &synth.envs[0].out,
             .impulseLen = 512,
-            .window = WINDOW_HAMMING,
+            .window = WINDOW_HANN,
         },
 
         .envs[0] = {
