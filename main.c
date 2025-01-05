@@ -60,7 +60,7 @@ void audioCallback(void *userdata, uint8_t *stream, int len) {
         //    break;
         default:
             data->gate = true;
-            data->inputFreq = freqToSample(100 * powf(2, (float) (data->curChar - 48) / 12));
+            data->inputFreq = freqToSample(100 * powf(2, (data->curChar - 48) / 12.0f));
             break;
       }
         synthRun(data->synth);
@@ -78,7 +78,7 @@ int main(void) {
     struct Synth synth = {
         .oscs[0] = {
             .freqSample = &callbackData.inputFreq,
-            .waveform = PTR(WAV_TRI),
+            .waveform = PTR(WAV_SQUARE),
             .amt = PTR(floatToAmt(0.5)),
         },
         .oscs[1] = {
@@ -91,7 +91,7 @@ int main(void) {
 
         .filters[0] = {
             .sampleIn = &synth.oscs[0].out,
-            .cutoff = PTR(freqToSample(1000)),
+            .cutoff = &synth.envs[0].out,
             .impulseLen = 256,
             .window = WINDOW_RECTANGULAR,
         },
@@ -104,7 +104,7 @@ int main(void) {
             .releaseMs = PTRF(1000),
         },
 
-        .outPtr = &synth.mixers[0].out,
+        .outPtr = &synth.filters[0].out,
     };
 
     callbackData.synth = &synth;

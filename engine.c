@@ -31,15 +31,15 @@ static void distRun(struct Distortion *distortion) {
 }
 
 float sampleToFreq(int16_t sample) {
-    return expf((float) sample * logf((float) SAMPLE_RATE / 2 - MIDDLE_C_FREQ) / INT16_MAX);
+    return expf(sample * logf(SAMPLE_RATE / 2.0f - MIDDLE_C_FREQ) / INT16_MAX);
 }
 
 int16_t freqToSample(float freq) {
-    return INT16_MAX * logf(freq) / (logf((float) SAMPLE_RATE / 2 - MIDDLE_C_FREQ));
+    return INT16_MAX * logf(freq) / (logf(SAMPLE_RATE / 2.0f - MIDDLE_C_FREQ));
 }
 
 float sampleToFloat(int16_t sample, float rangeMin, float rangeMax) {
-    float floatOut = (rangeMax + rangeMin) / 2 + sample * (float) ((int) rangeMax - (int) rangeMin) / (INT16_MAX - INT16_MIN);
+    float floatOut = (rangeMax + rangeMin) / 2 + sample * (rangeMax - rangeMin) / (INT16_MAX - INT16_MIN);
     // floating point is annoying
     if (floatOut < rangeMin) {
         return rangeMin;
@@ -106,7 +106,7 @@ static void oscRun(struct Oscillator *osc) {
 }
 
 static void ampRun(struct Amplifier *amp) {
-    float sampleOut = (float) *amp->sampleIn * *amp->gain;
+    float sampleOut = *amp->sampleIn * *amp->gain;
     if (sampleOut > INT16_MAX) {
         amp->out = INT16_MAX;
     } else if (sampleOut < INT16_MIN) {
@@ -117,13 +117,13 @@ static void ampRun(struct Amplifier *amp) {
 }
 
 static void attrRun(struct Attenuator *attr) {
-    attr->out = *attr->sampleIn * (float) (*attr->amount - INT16_MIN) / (INT16_MAX - INT16_MIN);
+    attr->out = *attr->sampleIn * (*attr->amount - INT16_MIN) / (INT16_MAX - INT16_MIN);
 }
 
 static void envRun(struct Envelope *env) {
-    uint32_t attackPeriod = *env->attackMs * (float) SAMPLE_RATE / 1000;
-    uint32_t decayPeriod = *env->decayMs * (float) SAMPLE_RATE / 1000;
-    uint32_t releasePeriod = *env->releaseMs * (float) SAMPLE_RATE / 1000;
+    uint32_t attackPeriod = *env->attackMs * SAMPLE_RATE / 1000.0f;
+    uint32_t decayPeriod = *env->decayMs * SAMPLE_RATE / 1000.0f;
+    uint32_t releasePeriod = *env->releaseMs * SAMPLE_RATE / 1000.0f;
     int16_t sample;
 
     int16_t sustain = *env->sustain;
