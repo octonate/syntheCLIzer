@@ -22,7 +22,9 @@ static void mixerRun(struct Mixer *mixer) {
     for (len = 0; mixer->samplesIn[len] != NULL; len++) {
         total += *mixer->samplesIn[len];
     }
-    mixer->out = total / len;
+    if (total > INT16_MAX) total = INT16_MAX;
+    if (total < INT16_MIN) total = INT16_MIN;
+    mixer->out = total;
 }
 
 static void distRun(struct Distortion *distortion) {

@@ -79,28 +79,28 @@ int main(void) {
         .oscs[0] = {
             .freqSample = &callbackData.inputFreq,
             .waveform = PTR(WAV_SQUARE),
-            .amt = PTR(floatToAmt(0.5)),
+            .amt = PTR(floatToAmt(0.25)),
         },
         .oscs[1] = {
             .freqSample = &callbackData.inputFreq,
-            .waveform = PTR(WAV_SINE),
-            .amt = PTR(floatToAmt(0.5))
+            .waveform = PTR(WAV_SAW),
+            .amt = PTR(floatToAmt(0.25))
         },
 
         .mixers[0].samplesIn = NULL_TERM_ARR(int16_t*, &synth.oscs[0].out, &synth.oscs[1].out),
 
         .filters[0] = {
-            .sampleIn = &synth.oscs[0].out,
+            .sampleIn = &synth.mixers[0].out,
             .cutoff = &synth.envs[0].out,
-            .impulseLen = 256,
-            .window = WINDOW_RECTANGULAR,
+            .impulseLen = 512,
+            .window = WINDOW_HAMMING,
         },
 
         .envs[0] = {
             .gate = &callbackData.gate,
-            .attackMs = PTRF(100),
-            .decayMs = PTRF(500),
-            .sustain = PTRF(freqToSample(0)),
+            .attackMs = PTRF(80),
+            .decayMs = PTRF(150),
+            .sustain = PTRF(freqToSample(1000)),
             .releaseMs = PTRF(1000),
         },
 
