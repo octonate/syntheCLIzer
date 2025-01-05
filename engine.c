@@ -57,24 +57,6 @@ int16_t floatToAmt(float amt) {
     return amt * (INT16_MAX - INT16_MIN) + INT16_MIN;
 }
 
-static int16_t oscSine(float freq, uint16_t t) {
-    return INT16_MAX * sinf(M_TAU * t * freq / SAMPLE_RATE);
-}
-
-static int16_t oscSquare(float freq, uint16_t t) {
-    return (t < SAMPLE_RATE / freq / 2 ? INT16_MAX : INT16_MIN);
-}
-
-static int16_t oscSaw(float freq, uint16_t t) {
-    float period = SAMPLE_RATE / freq;
-    return INT16_MAX * (2 * fmodf(t, period) / period - 1);
-}
-
-static int16_t oscTri(float freq, uint16_t t) {
-    float period = SAMPLE_RATE / freq;
-    return INT16_MAX * ((4.0 * fmodPos((t < period / 2 ? t : -t), period) / period) - 1);
-}
-
 void srandqd(int32_t seed) {
     nextRand = seed;
 }
@@ -93,6 +75,8 @@ static void oscRun(struct Oscillator *osc) {
     float freq = sampleToFreq(*osc->freqSample);
     float period = SAMPLE_RATE / freq;
     int16_t sample = INT16_MIN;
+    int16_t amplitude = (*osc->amt - INT16_MIN) / 2;
+
     if (osc->_priv.t > period) {
         osc->_priv.t = 0;
     }
@@ -105,16 +89,16 @@ static void oscRun(struct Oscillator *osc) {
 
     switch (*osc->waveform) {
     case WAV_SINE:
-        sample = oscSine(freq, tOffset);
+        sample = amplitude * sinf(M_TAU * tOffset * freq / SAMPLE_RATE);
         break;
     case WAV_SQUARE:
-        sample = oscSquare(freq, tOffset);
+        sample = (tOffset < SAMPLE_RATE / freq / 2 ? -amplitude : amplitude);
         break;
     case WAV_TRI:
-        sample = oscTri(freq, tOffset);
+        sample = amplitude * 4 * (fabs(fmodf(tOffset, period) - period / 2.0f) - period / 4.0f) / period;
         break;
     case WAV_SAW:
-        sample = oscSaw(freq, tOffset);
+        sample = amplitude * (2.0f * fmodf(tOffset, period) / period - 1);
         break;
     }
     osc->_priv.t += 1;

@@ -76,27 +76,35 @@ int main(void) {
     struct Userdata callbackData = {0};
 
     struct Synth synth = {
-        .oscs[0] = { &callbackData.inputFreq, PTR(WAV_TRI) },
-        .oscs[1] = { PTR(freqToSample(200)), PTR(WAV_SINE) },
+        .oscs[0] = {
+            .freqSample = &callbackData.inputFreq,
+            .waveform = PTR(WAV_TRI),
+            .amt = PTR(floatToAmt(0.5)),
+        },
+        .oscs[1] = {
+            .freqSample = &callbackData.inputFreq,
+            .waveform = PTR(WAV_SINE),
+            .amt = PTR(floatToAmt(0.5))
+        },
 
         .mixers[0].samplesIn = NULL_TERM_ARR(int16_t*, &synth.oscs[0].out, &synth.oscs[1].out),
 
         .filters[0] = {
-            .sampleIn = &synth.mixers[0].out,
-            .cutoff = PTR(freqToSample(20000)),
-            .impulseLen = 55,
-            .window = WINDOW_HAMMING,
+            .sampleIn = &synth.oscs[0].out,
+            .cutoff = PTR(freqToSample(1000)),
+            .impulseLen = 256,
+            .window = WINDOW_RECTANGULAR,
         },
 
         .envs[0] = {
             .gate = &callbackData.gate,
             .attackMs = PTRF(100),
             .decayMs = PTRF(500),
-            .sustain = PTRF(freqToSample(100)),
+            .sustain = PTRF(freqToSample(0)),
             .releaseMs = PTRF(1000),
         },
 
-        .outPtr = &synth.filters[0].out,
+        .outPtr = &synth.mixers[0].out,
     };
 
     callbackData.synth = &synth;

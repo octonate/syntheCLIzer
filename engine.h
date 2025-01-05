@@ -47,6 +47,7 @@ struct NoteInput {
 struct Oscillator {
     int16_t *freqSample;
     int16_t *waveform;
+    int16_t *amt;
     float *phaseOffset;
 
     struct {
