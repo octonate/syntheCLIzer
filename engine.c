@@ -5,6 +5,87 @@
 
 #include "engine.h"
 
+Cplx euler(float phi) {
+    return (Cplx) {
+        .real = cosf(phi),
+        .imag = sinf(phi)
+    };
+}
+
+Cplx cplxAdd(Cplx z1, Cplx z2) {
+    return (Cplx){ z1.real + z2.real, z1.imag + z2.imag };
+}
+
+Cplx cplxScale(Cplx z, float k) {
+    return (Cplx){ k * z.real, k * z.imag};
+}
+
+void cplxPrint(Cplx z) {
+    //printf("%f %c j%f\n", z.real, z.imag >= 0 ? '+' : '-', fabs(z.imag));
+    printf("(%f, %f) \n", z.real, z.imag);
+}
+
+void slowFourierTransform(int16_t *sampleBuf, Cplx *outBuf, size_t bufLen) {
+    for (size_t k = 0; k < bufLen / 2; k++) {
+        outBuf[k] = (Cplx){ 0, 0 };
+        for (size_t n = 0; n < bufLen; n++) {
+            float b = -M_TAU * k * n / bufLen;
+            outBuf[k] = cplxAdd(outBuf[k], cplxScale(euler(-b), 2.0f * sampleBuf[n] / bufLen));
+        }
+    }
+}
+
+void slowFourierTransformCirc(int16_t *sampleBuf, Cplx *outBuf, size_t sampleIdx, size_t bufLen) {
+    for (size_t k = 0; k < bufLen / 2; k++) {
+        outBuf[k] = (Cplx){ 0, 0 };
+        size_t curIdx = sampleIdx;
+        for (size_t n = 0; n < bufLen; n++) {
+            float b = -M_TAU * k * n / bufLen;
+            outBuf[k] = cplxAdd(outBuf[k], cplxScale(euler(-b), 2.0f * sampleBuf[curIdx] / bufLen));
+            if (curIdx++ == bufLen) curIdx = 0;
+        }
+    }
+}
+
+void printFourier(Cplx *fourier, size_t fourierLen) {
+    for (size_t i = 0; i < fourierLen; i++) {
+        cplxPrint(fourier[i]);
+    }
+}
+
+void sftTest(void) {
+    int16_t samples[22] = {
+        4683,
+        7685,
+        7927,
+        5323,
+        807,
+        -3997,
+        -7367,
+        -8092,
+        -5911,
+        -1607,
+        0,
+        4683,
+        7685,
+        7927,
+        5323,
+        807,
+        -3997,
+        -7367,
+        -8092,
+        -5911,
+        -1607,
+        0
+    };
+
+    Cplx ftBuf[22];
+    slowFourierTransform(samples, ftBuf, 22);
+    for (int i = 0; i < 11; i++) {
+        cplxPrint(ftBuf[i]);
+    }
+}
+
 static uint64_t nextRand = 42;
 
 static float fmodPos(float x, float y) {
@@ -226,6 +307,7 @@ static void filterRun(struct Filter *filter) {
         filter->_priv.samplesBufIdx = 0;
     }
 
+    // generate impulse response
     if (*filter->cutoff != filter->_priv.prevCutoff) {
         float cutoffFreq = sampleToFreq(*filter->cutoff);
         float responseSum = 0;
@@ -249,6 +331,16 @@ static void filterRun(struct Filter *filter) {
             sumIdx = filter->impulseLen - 1;
         }
         sampleOut += filter->_priv.samplesBuf[sumIdx] * filter->_priv.impulseResponse[i];
+    }
+
+    if (filter->_priv.samplesBufIdx == 0) {
+        //Cplx fourier[filter->impulseLen / 2];
+        //slowFourierTransform(filter->_priv.samplesBuf, fourier, filter->_priv.samplesBufIdx);
+        //printFourier(fourier, filter->impulseLen / 2);
+        //for (size_t i = 0; i < filter->impulseLen; i++) {
+        //    printf("%d\n", filter->_priv.samplesBuf[i]);
+        //}
+        //printf("\n\n\n");
     }
 
     filter->_priv.prevCutoff = *filter->cutoff;

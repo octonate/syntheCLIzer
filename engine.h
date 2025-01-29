@@ -46,8 +46,8 @@ struct NoteInput {
 
 struct Oscillator {
     int16_t *freqSample;
-    int16_t *waveform;
     int16_t *amt;
+    int16_t *waveform;
     float *phaseOffset;
 
     struct {
@@ -134,6 +134,17 @@ float sampleToFreq(int16_t sample);
 int16_t freqToSample(float freq);
 float sampleToFloat(int16_t sample, float rangeMin, float rangeMax);
 int16_t floatToAmt(float amt);
+
+
+typedef struct {
+    float real;
+    float imag;
+} Cplx;
+
+
+void sftTest(void);
+void slowFourierTransform(int16_t *sampleBuf, Cplx *outBuf, size_t bufLen);
+void cplxPrint(Cplx z);
 
 void srandqd(int32_t seed);
 
