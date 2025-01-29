@@ -1,6 +1,6 @@
-CFLAGS = -Wall -Wno-unused-command-line-argument -pedantic -pedantic-errors -Wextra -Wstrict-prototypes -std=c99 -O3
+CFLAGS = -Wall -pedantic -pedantic-errors -Wextra -Wstrict-prototypes -std=c99 -O3
 DBGFLAGS = -fsanitize=undefined
-LDLIBS = -lm -lSDL2
+LDLIBS = -lm -lsoundio
 CC = gcc
 OBJDIR = .obj
 BIN = synth

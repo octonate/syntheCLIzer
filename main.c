@@ -1,8 +1,9 @@
+#include <soundio/soundio.h>
+
+#include <math.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <SDL2/SDL_audio.h>
-#include <SDL2/SDL.h>
 #include "engine.h"
 #include "tui.h"
 
@@ -13,67 +14,79 @@
 #define PTRF(x) &(float){x}
 
 
-SDL_AudioDeviceID audioDevice;
-SDL_AudioSpec audioSpec;
-
-
 struct Userdata {
     struct Synth *synth;
     int16_t inputFreq;
     bool gate;
-    int curChar;
+    bool quit;
 };
 
 
-void audioCallback(void *userdata, uint8_t *stream, int len) {
-    struct Userdata *data = (struct Userdata *)userdata;
-
-    int16_t *stream16 = (int16_t *)stream;
-
-    for (size_t i = 0; i < len / sizeof(int16_t); i++) {
-        switch (data->curChar) {
-        case '\0':
-            break;
-        case '[':
-            data->gate = true;
-            break;
-        case ']':
-            data->gate = false;
-            break;
-        //case 'k':
-        //    boxIncrFocElement(tui->boxes[tui->focBoxIdx]);
-        //    break;
-        //case 'j':
-        //    boxDecrFocElement(tui->boxes[tui->focBoxIdx]);
-        //    break;
-        //case 'h':
-        //    boxPrevElement(tui->boxes[tui->focBoxIdx]);
-        //    break;
-        //case 'l':
-        //    boxNextElement(tui->boxes[tui->focBoxIdx]);
-        //    break;
-        //case 'H':
-        //    tuiPrevBox(tui);
-        //    break;
-        //case 'L':
-        //    tuiNextBox(tui);
-        //    break;
-        default:
-            data->gate = true;
-            data->inputFreq = freqToSample(100 * powf(2, (data->curChar - 48) / 12.0f));
-            break;
-      }
-        synthRun(data->synth);
-        stream16[i] = *data->synth->outPtr;
+void updateInput(struct Userdata *userdata) {
+    int curChar = getchar();
+    switch (curChar) {
+    case '\0':
+        break;
+    case '[':
+        userdata->gate = true;
+        break;
+    case ']':
+        userdata->gate = false;
+        break;
+    case 'q':
+        userdata->quit = true;
+        break;
+    default:
+        userdata->gate = true;
+        userdata->inputFreq = freqToSample(100 * powf(2, (curChar - 48) / 12.0f));
+        break;
     }
+}
+
+void soundioCallback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
+    struct Userdata *callbackData = outstream->userdata;
+    struct SoundIoChannelArea *areas;
+
+    int framesLeft = frame_count_max;
+    int err;
+
+    while (framesLeft > 0) {
+        int frameCount = framesLeft;
+
+        if ((err = soundio_outstream_begin_write(outstream, &areas, &frameCount))) {
+            fprintf(stderr, "%s\n", soundio_strerror(err));
+            exit(1);
+        }
+        
+        if (!frameCount) break;
+
+        for (int frame = 0; frame < frameCount; frame++) {
+            synthRun(callbackData->synth);
+            int16_t sample = *callbackData->synth->outPtr;
+
+            for (int channel = 0; channel < outstream->layout.channel_count; channel++) {
+                int16_t *samplePtr = (int16_t *)(areas[channel].ptr + areas[channel].step * frame);
+                *samplePtr = sample;
+            }
+        }
+
+        if ((err = soundio_outstream_end_write(outstream))) {
+            fprintf(stderr, "%s\n", soundio_strerror(err));
+            exit(1);
+        }
+
+        framesLeft -= frameCount;
+    }
+
 }
 
 int main(void) {
     system("clear");
-    termInit();
     srandqd(42);
 
-    struct Userdata callbackData = {0};
+    termInit();
+
+    struct Userdata callbackData;
 
     struct Synth synth = {
         .oscs[0] = {
@@ -92,8 +105,8 @@ int main(void) {
         .filters[0] = {
             .sampleIn = &synth.mixers[0].out,
             .cutoff = &synth.envs[0].out,
-            .impulseLen = 512,
-            .window = WINDOW_HANN,
+            .impulseLen = 128,
+            .window = WINDOW_HAMMING,
         },
 
         .envs[0] = {
@@ -109,29 +122,59 @@ int main(void) {
 
     callbackData.synth = &synth;
 
-    SDL_Init(SDL_INIT_AUDIO);
-
-    SDL_zero(audioSpec);
-    audioSpec.freq = SAMPLE_RATE;
-    audioSpec.format = AUDIO_S16SYS;
-    audioSpec.channels = 1;
-    audioSpec.samples = STREAM_BUF_SIZE;
-    audioSpec.callback = &audioCallback;
-    audioSpec.userdata = &callbackData;
-
-
-    audioDevice = SDL_OpenAudioDevice(NULL, 0, &audioSpec, NULL, 0);
-    SDL_PauseAudioDevice(audioDevice, 0);
-
-
-    while (callbackData.curChar != 'q') {
-        callbackData.curChar = getchar();
+    int err;
+    struct SoundIo *soundio = soundio_create();
+    if (soundio == NULL) {
+        fprintf(stderr, "out of memory\n");
+        return 1;
     }
 
-    SDL_Delay(50);
+    if ((err = soundio_connect(soundio))) {
+        fprintf(stderr, "connection error\n");
+        return 1;
+    }
 
-    SDL_CloseAudioDevice(audioDevice);
-    SDL_Quit();
+    soundio_flush_events(soundio);
+
+    int deviceIdx = soundio_default_output_device_index(soundio);
+    if (deviceIdx < 0) {
+        fprintf(stderr, "no output device found\n");
+        return 1;
+    }
+
+    struct SoundIoDevice *device = soundio_get_output_device(soundio, deviceIdx);
+    if (device == NULL) {
+        fprintf(stderr, "out of memory\n");
+        return 1;
+    }
+
+    struct SoundIoOutStream *outstream = soundio_outstream_create(device);
+    outstream->format = SoundIoFormatS16NE;
+    outstream->sample_rate = SAMPLE_RATE;
+    outstream->write_callback = soundioCallback;
+    outstream->userdata = &callbackData;
+    outstream->software_latency = 0.02;
+
+    if ((err = soundio_outstream_open(outstream))) {
+        fprintf(stderr, "unable to open device: %s", soundio_strerror(err));
+        return 1;
+    }
+
+    if (outstream->layout_error)
+        fprintf(stderr, "unable to set channel layout: %s\n", soundio_strerror(outstream->layout_error));
+
+    if ((err = soundio_outstream_start(outstream))) {
+        fprintf(stderr, "unable to start device: %s", soundio_strerror(err));
+        return 1;
+    }
+
+    while (callbackData.quit != true) {
+        updateInput(&callbackData);
+    }
+    
+    soundio_outstream_destroy(outstream);
+    soundio_device_unref(device);
+    soundio_destroy(soundio);
 
     resetTerm();
 
