@@ -5,6 +5,13 @@
 
 #include "engine.h"
 
+int16_t floatToAmt(float amt) {
+    if (amt >= 1) return INT16_MAX;
+    if (amt <= 0) return INT16_MIN;
+
+    return amt * (INT16_MAX - INT16_MIN) + INT16_MIN;
+}
+
 Cplx euler(float phi) {
     return (Cplx) {
         .real = cosf(phi),
@@ -20,70 +27,104 @@ Cplx cplxScale(Cplx z, float k) {
     return (Cplx){ k * z.real, k * z.imag};
 }
 
+Cplx cplxMult(Cplx z1, Cplx z2) {
+    return (Cplx){
+        .real = z1.real * z2.real - z1.imag * z2.imag,
+        .imag = z1.real * z2.imag + z2.real * z1.imag
+    };
+}
+
 void cplxPrint(Cplx z) {
-    //printf("%f %c j%f\n", z.real, z.imag >= 0 ? '+' : '-', fabs(z.imag));
-    printf("(%f, %f) \n", z.real, z.imag);
+    printf("%f %c j%f\n", z.real, z.imag >= 0 ? '+' : '-', fabs(z.imag));
+}
+
+void slowFourierTransformHalf(int16_t *sampleBuf, Cplx *outBuf, size_t bufLen) {
+    for (size_t k = 0; k < bufLen / 2; k++) {
+        outBuf[k] = (Cplx){ 0, 0 };
+        for (size_t n = 0; n < bufLen; n++) {
+            float b = M_TAU * k * n / bufLen;
+            outBuf[k] = cplxAdd(outBuf[k], cplxScale(euler(-b), 2.0f * (float) sampleBuf[n] / bufLen));
+        }
+    }
 }
 
 void slowFourierTransform(int16_t *sampleBuf, Cplx *outBuf, size_t bufLen) {
-    for (size_t k = 0; k < bufLen / 2; k++) {
+    for (size_t k = 0; k < bufLen; k++) {
         outBuf[k] = (Cplx){ 0, 0 };
         for (size_t n = 0; n < bufLen; n++) {
-            float b = -M_TAU * k * n / bufLen;
-            outBuf[k] = cplxAdd(outBuf[k], cplxScale(euler(-b), 2.0f * sampleBuf[n] / bufLen));
+            float b = M_TAU * k * n / bufLen;
+            outBuf[k] = cplxAdd(outBuf[k], cplxScale(euler(-b), (float) sampleBuf[n] / bufLen));
         }
     }
 }
 
-void slowFourierTransformCirc(int16_t *sampleBuf, Cplx *outBuf, size_t sampleIdx, size_t bufLen) {
+
+void recursiveFFT(const Cplx *inBuf, Cplx *outBuf, size_t bufLen) {
+    if (bufLen == 1) {
+        outBuf[0] = inBuf[0];
+        return;
+    }
+
+    Cplx nthRoot = euler(M_TAU / bufLen);
+    Cplx w = {.real = 1};
+
+    Cplx evensIn[bufLen / 2];
+    Cplx oddsIn[bufLen / 2];
+    Cplx evensOut[bufLen / 2];
+    Cplx oddsOut[bufLen / 2];
+    for (size_t i = 0; i < bufLen / 2; i++) {
+        evensIn[i] = inBuf[2 * i];
+        oddsIn[i] = inBuf[2 * i + 1];
+    }
+
+    recursiveFFT(evensIn, evensOut, bufLen / 2);
+    recursiveFFT(oddsIn, oddsOut, bufLen / 2);
+
     for (size_t k = 0; k < bufLen / 2; k++) {
-        outBuf[k] = (Cplx){ 0, 0 };
-        size_t curIdx = sampleIdx;
-        for (size_t n = 0; n < bufLen; n++) {
-            float b = -M_TAU * k * n / bufLen;
-            outBuf[k] = cplxAdd(outBuf[k], cplxScale(euler(-b), 2.0f * sampleBuf[curIdx] / bufLen));
-            if (curIdx++ == bufLen) curIdx = 0;
-        }
+        outBuf[k] = cplxAdd(evensOut[k], cplxMult(w, oddsOut[k]));
+        outBuf[k + bufLen / 2] = cplxAdd(evensOut[k], cplxMult(cplxScale(w, -1), oddsOut[k]));
+        w = cplxMult(w, nthRoot);
     }
 }
 
-void printFourier(Cplx *fourier, size_t fourierLen) {
+void slowFFT(const Cplx *inBuf, Cplx *outBuf, size_t bufLen) {
+    recursiveFFT(inBuf, outBuf, bufLen);
+    for (size_t i = 0; i < bufLen; i++) {
+        outBuf[i] = cplxScale(outBuf[i], 1.0f / bufLen);
+    }
+}
+
+void printFourier(Cplx *fourier, size_t fourierLen, float sampleRate) {
     for (size_t i = 0; i < fourierLen; i++) {
+        printf("%.2f Hz: ", i * sampleRate / fourierLen / 2);
         cplxPrint(fourier[i]);
     }
 }
 
-void sftTest(void) {
-    int16_t samples[22] = {
-        4683,
-        7685,
-        7927,
-        5323,
-        807,
-        -3997,
-        -7367,
-        -8092,
-        -5911,
-        -1607,
-        0,
-        4683,
-        7685,
-        7927,
-        5323,
-        807,
-        -3997,
-        -7367,
-        -8092,
-        -5911,
-        -1607,
-        0
-    };
 
-    Cplx ftBuf[22];
-    slowFourierTransform(samples, ftBuf, 22);
-    for (int i = 0; i < 11; i++) {
-        cplxPrint(ftBuf[i]);
+void sftTest(void) {
+    int16_t samples[128];
+    int16_t samples2[128];
+    float freq = 1300;
+    float freq2 = 12000;
+    float amplitude = 1000;
+    float sampleRate = SAMPLE_RATE;
+    for (int i = 0; i < 128; i++) {
+        samples[i] = amplitude * sinf(M_TAU * i * freq / sampleRate);
+        samples2[i] = amplitude * sinf(M_TAU * i * freq2 / sampleRate);
     }
+    Cplx samplesCplx[128];
+    for (int i = 0; i < 128; i++) {
+        samplesCplx[i] = (Cplx){ .real = samples[i] + samples2[i] };
+    }
+    Cplx fourierSFT[128];
+    Cplx fourierFFT[128];
+    slowFourierTransform(samples, fourierSFT, 128);
+    slowFFT(samplesCplx, fourierFFT, 128);
+    printf("slow:\n");
+    printFourier(fourierSFT, 128, sampleRate);
+    printf("\n\n\nfast:\n");
+    printFourier(fourierFFT, 128, sampleRate);
 }
 
 static uint64_t nextRand = 42;
@@ -133,12 +174,6 @@ float sampleToFloat(int16_t sample, float rangeMin, float rangeMax) {
     return floatOut;
 }
 
-int16_t floatToAmt(float amt) {
-    if (amt >= 1) return INT16_MAX;
-    if (amt <= 0) return INT16_MIN;
-
-    return amt * (INT16_MAX - INT16_MIN) + INT16_MIN;
-}
 
 void srandqd(int32_t seed) {
     nextRand = seed;
