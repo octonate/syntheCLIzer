@@ -107,17 +107,22 @@ int main(void) {
 
         [3] = MODULE(Filter,
             .sampleIn = &modules[2].out,
-            .cutoff = &modules[4].out,
+            .cutoff = &modules[5].out,
             .impulseLen = 128,
             .window = WINDOW_HANN,
         ),
 
-        [4] = MODULE(Envelope,
+        [4] = MODULE(EnvelopeAdsr,
             .gate = &callbackData.gate,
-            .attackMs = PTRF(80),
-            .decayMs = PTRF(150),
+            .attackMs = PTRF(300),
+            .decayMs = PTRF(100),
             .sustain = PTRF(freqToSample(1000)),
-            .releaseMs = PTRF(1000),
+            .releaseMs = PTRF(2000),
+        ),
+        [5] = MODULE(EnvelopeAd,
+            .gate = &callbackData.gate,
+            .attackMs = PTRF(50),
+            .decayMs = PTRF(1000),
         ),
     };
 
@@ -183,9 +188,9 @@ int main(void) {
     while (callbackData.quit != true) {
         updateInput(&callbackData);
     }
-
-    sftTest();
     
+
+
     soundio_outstream_destroy(outstream);
     soundio_device_unref(device);
     soundio_destroy(soundio);

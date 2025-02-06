@@ -39,6 +39,13 @@ enum FirWindowType {
     WINDOW_BLACKMAN,
 };
 
+enum EnvStage {
+    STAGE_Attack,
+    STAGE_Decay,
+    STAGE_Sustain,
+    STAGE_Release,
+};
+
 struct NoteInput {
     int16_t val;
     bool gate;
@@ -56,7 +63,7 @@ struct Oscillator {
     } _priv;
 };
 
-struct Envelope {
+struct EnvelopeAdsr {
     bool *gate;
     float *attackMs;
     float *decayMs;
@@ -68,6 +75,17 @@ struct Envelope {
         uint32_t t;
         int16_t releaseSample;
         int16_t prevOut;
+    } _priv;
+};
+
+struct EnvelopeAd {
+    bool *gate;
+    float *attackMs;
+    float *decayMs;
+
+    struct {
+        bool prevGate;
+        uint32_t t;
     } _priv;
 };
 
@@ -122,7 +140,8 @@ struct Filter {
 
 enum SynthModuleType {
     MODULE_Oscillator,
-    MODULE_Envelope,
+    MODULE_EnvelopeAdsr,
+    MODULE_EnvelopeAd,
     MODULE_Amplifier,
     MODULE_Distortion,
     MODULE_Attenuator,
@@ -132,7 +151,7 @@ enum SynthModuleType {
 
 struct SynthModule {
     void *ptr;
-    int16_t tag;
+    enum SynthModuleType tag;
     int16_t out;
 };
 

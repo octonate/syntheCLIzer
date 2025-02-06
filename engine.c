@@ -12,6 +12,44 @@ int16_t floatToAmt(float amt) {
     return amt * (INT16_MAX - INT16_MIN) + INT16_MIN;
 }
 
+int16_t tToRange(float t, float tInitial, float tFinal, int16_t yInitial, int16_t yFinal) {
+    if (t >= tFinal) return yFinal;
+    if (t <= tInitial) return yInitial;
+
+    float slope = (yFinal - yInitial) / (tFinal - tInitial);
+
+    return slope * (t - tInitial) + yInitial;
+}
+
+int16_t freqToSample(float freq) {
+    return INT16_MAX * logf(freq) / (logf(SAMPLE_RATE / 2.0f - MIDDLE_C_FREQ));
+}
+
+float sampleToFreq(int16_t sample) {
+    return expf(sample * logf(SAMPLE_RATE / 2.0f - MIDDLE_C_FREQ) / INT16_MAX);
+}
+
+float sampleToFloat(int16_t sample, float rangeMin, float rangeMax) {
+    float floatOut =
+        (rangeMax + rangeMin) / 2
+        + sample * (rangeMax - rangeMin) / (INT16_MAX - INT16_MIN);
+
+    // floating point is annoying
+    if (floatOut <= rangeMin) return rangeMin;
+    if (floatOut >= rangeMax) return rangeMax;
+
+    return floatOut;
+}
+
+static float fmodPos(float x, float y) {
+    float result = fmodf(x, y);
+    return (result >= 0 ? result : result + y);
+}
+
+static float sinc(float x) {
+    return x == 0 ? 1 : sinf(x) / x;
+}
+
 Cplx euler(float phi) {
     return (Cplx) {
         .real = cosf(phi),
@@ -131,14 +169,6 @@ void sftTest(void) {
 
 static uint64_t nextRand = 42;
 
-static float fmodPos(float x, float y) {
-    float result = fmodf(x, y);
-    return (result >= 0 ? result : result + y);
-}
-
-static float sinc(float x) {
-    return x == 0 ? 1 : sinf(x) / x;
-}
 
 static int16_t mixerRun(struct Mixer *mixer) {
     int32_t total = 0;
@@ -159,29 +189,6 @@ static int16_t distRun(struct Distortion *distortion) {
         / (powf(x, *distortion->slope) + powf(1 - x, *distortion->slope))
         + INT16_MIN
     );
-}
-
-float sampleToFreq(int16_t sample) {
-    return expf(sample * logf(SAMPLE_RATE / 2.0f - MIDDLE_C_FREQ) / INT16_MAX);
-}
-
-int16_t freqToSample(float freq) {
-    return INT16_MAX * logf(freq) / (logf(SAMPLE_RATE / 2.0f - MIDDLE_C_FREQ));
-}
-
-float sampleToFloat(int16_t sample, float rangeMin, float rangeMax) {
-    float floatOut =
-        (rangeMax + rangeMin) / 2
-        + sample * (rangeMax - rangeMin) / (INT16_MAX - INT16_MIN);
-
-    // floating point is annoying
-    if (floatOut < rangeMin) {
-        return rangeMin;
-    } else if (floatOut > rangeMax) {
-        return rangeMax;
-    }
-
-    return floatOut;
 }
 
 
@@ -247,10 +254,15 @@ static int16_t attrRun(struct Attenuator *attr) {
     return *attr->sampleIn * (*attr->amount - INT16_MIN) / (INT16_MAX - INT16_MIN);
 }
 
-static int16_t envRun(struct Envelope *env) {
-    uint32_t attackPeriod = *env->attackMs * SAMPLE_RATE / 1000.0f;
-    uint32_t decayPeriod = *env->decayMs * SAMPLE_RATE / 1000.0f;
-    uint32_t releasePeriod = *env->releaseMs * SAMPLE_RATE / 1000.0f;
+static uint32_t msToFrames(float ms) {
+    return ms * SAMPLE_RATE / 1000.0f;
+}
+
+
+static int16_t envAdsrRun(struct EnvelopeAdsr *env) {
+    uint32_t attackPeriod = msToFrames(*env->attackMs);
+    uint32_t decayPeriod = msToFrames(*env->decayMs);
+    uint32_t releasePeriod = msToFrames(*env->releaseMs);
     int16_t sample;
 
     int16_t sustain = *env->sustain;
@@ -270,11 +282,18 @@ static int16_t envRun(struct Envelope *env) {
         if (env->_priv.t >= attackPeriod + decayPeriod
             && env->_priv.t < attackPeriod + decayPeriod + releasePeriod)
         {
-            sample = (int16_t)
-                (env->_priv.releaseSample
-                 - (env->_priv.t - attackPeriod - decayPeriod)
-                 * (env->_priv.releaseSample - INT16_MIN)
-                 / releasePeriod);
+            //sample = (int16_t)
+            //    (env->_priv.releaseSample
+            //     - (env->_priv.t - attackPeriod - decayPeriod)
+            //     * (env->_priv.releaseSample - INT16_MIN)
+            //     / releasePeriod);
+            sample = tToRange(
+                env->_priv.t,
+                attackPeriod + decayPeriod,
+                attackPeriod + decayPeriod + releasePeriod,
+                env->_priv.releaseSample,
+                INT16_MIN
+            );
 
             env->_priv.t += 1;
         } else {
@@ -286,16 +305,40 @@ static int16_t envRun(struct Envelope *env) {
     }
 
     if (env->_priv.t < attackPeriod) {
-        sample = env->_priv.t * 2 * INT16_MAX / attackPeriod + INT16_MIN;
+        //sample = env->_priv.t * 2 * INT16_MAX / attackPeriod + INT16_MIN;
+        sample = tToRange(env->_priv.t, 0, attackPeriod, INT16_MIN, INT16_MAX);
         env->_priv.t += 1;
     } else if (env->_priv.t < attackPeriod + decayPeriod) {
-        sample = INT16_MAX - (env->_priv.t - attackPeriod) * (INT16_MAX - sustain) / decayPeriod;
+        //sample = INT16_MAX - (env->_priv.t - attackPeriod) * (INT16_MAX - sustain) / decayPeriod;
+        sample = tToRange(env->_priv.t, attackPeriod, attackPeriod + decayPeriod, INT16_MAX, sustain);
         env->_priv.t += 1;
     } else {
         sample = sustain;
     } 
 
     env->_priv.prevOut = sample;
+    return sample;
+}
+
+static int16_t envAdRun(struct EnvelopeAd *env) {
+    uint32_t attackPeriod = msToFrames(*env->attackMs);
+    uint32_t decayPeriod = msToFrames(*env->decayMs);
+    int16_t sample = INT16_MIN;
+
+    if (*env->gate == true && env->_priv.prevGate == false) {
+        env->_priv.t = 0;
+    }
+
+    env->_priv.prevGate = *env->gate;
+    
+    if (env->_priv.t < attackPeriod) {
+        sample = tToRange(env->_priv.t, 0, attackPeriod, INT16_MIN, INT16_MAX);
+        env->_priv.t += 1;
+    } else if (env->_priv.t <= attackPeriod + decayPeriod) {
+        sample = tToRange(env->_priv.t, attackPeriod, attackPeriod + decayPeriod, INT16_MAX, INT16_MIN);
+        env->_priv.t += 1;
+    }
+
     return sample;
 }
 
@@ -449,8 +492,11 @@ void synthRun(struct Synth *synth) {
         case MODULE_Oscillator:
             synth->modules[i].out = oscRun(ptr);
             break;
-        case MODULE_Envelope:
-            synth->modules[i].out = envRun(ptr);
+        case MODULE_EnvelopeAdsr:
+            synth->modules[i].out = envAdsrRun(ptr);
+            break;
+        case MODULE_EnvelopeAd:
+            synth->modules[i].out = envAdRun(ptr);
             break;
         case MODULE_Amplifier:
             synth->modules[i].out = ampRun(ptr);
