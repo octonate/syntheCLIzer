@@ -24,19 +24,19 @@ enum {
 };
 
 enum Waveform {
-    WAV_SINE,
-    WAV_SQUARE,
-    WAV_TRI,
-    WAV_SAW,
-    WAV_NOISE
+    WAV_Sine,
+    WAV_Square,
+    WAV_Tri,
+    WAV_Saw,
+    WAV_Noise
 };
 
 enum FirWindowType {
-    WINDOW_RECTANGULAR,
-    WINDOW_HAMMING,
-    WINDOW_HANN,
-    WINDOW_BARTLETT,
-    WINDOW_BLACKMAN,
+    WINDOW_Rectangular,
+    WINDOW_Hamming,
+    WINDOW_Hann,
+    WINDOW_Bartlett,
+    WINDOW_Blackman,
 };
 
 enum EnvStage {

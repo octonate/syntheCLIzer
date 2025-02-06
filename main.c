@@ -92,12 +92,12 @@ int main(void) {
     struct SynthModule modules[] = {
         [0] = MODULE(Oscillator,
             .freqSample = &callbackData.inputFreq,
-            .waveform = PTR(WAV_SQUARE),
+            .waveform = PTR(WAV_Square),
             .amt = PTR(floatToAmt(0.25)),
         ),
         [1] = MODULE(Oscillator,
             .freqSample = &callbackData.inputFreq,
-            .waveform = PTR(WAV_SAW),
+            .waveform = PTR(WAV_Saw),
             .amt = PTR(floatToAmt(0.25))
         ),
 
@@ -109,7 +109,7 @@ int main(void) {
             .sampleIn = &modules[2].out,
             .cutoff = &modules[5].out,
             .impulseLen = 128,
-            .window = WINDOW_HANN,
+            .window = WINDOW_Hann,
         ),
 
         [4] = MODULE(EnvelopeAdsr,

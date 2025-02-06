@@ -202,7 +202,7 @@ static int16_t randqd(void) {
 }
 
 static int16_t oscRun(struct Oscillator *osc) {
-    if (*osc->waveform == WAV_NOISE) {
+    if (*osc->waveform == WAV_Noise) {
         return randqd();
     }
 
@@ -222,16 +222,16 @@ static int16_t oscRun(struct Oscillator *osc) {
     }
 
     switch (*osc->waveform) {
-    case WAV_SINE:
+    case WAV_Sine:
         sample = amplitude * sinf(M_TAU * tOffset * freq / SAMPLE_RATE);
         break;
-    case WAV_SQUARE:
+    case WAV_Square:
         sample = (tOffset < SAMPLE_RATE / freq / 2 ? -amplitude : amplitude);
         break;
-    case WAV_TRI:
+    case WAV_Tri:
         sample = amplitude * 4 * (fabs(fmodf(tOffset, period) - period / 2.0f) - period / 4.0f) / period;
         break;
-    case WAV_SAW:
+    case WAV_Saw:
         sample = amplitude * (2.0f * fmodf(tOffset, period) / period - 1);
         break;
     }
@@ -378,19 +378,19 @@ static void blackmanWindow(float *windowBuf, size_t impulseLen) {
 
 static void createFirWindow(float windowBuf[FILTER_BUF_SIZE], enum FirWindowType window, size_t impulseLen) {
     switch (window) {
-    case WINDOW_RECTANGULAR:
+    case WINDOW_Rectangular:
         rectangularWindow(windowBuf, impulseLen);
         break;
-    case WINDOW_HANN:
+    case WINDOW_Hann:
         hannWindow(windowBuf, impulseLen);
         break;
-    case WINDOW_HAMMING:
+    case WINDOW_Hamming:
         hammingWindow(windowBuf, impulseLen);
         break;
-    case WINDOW_BARTLETT:
+    case WINDOW_Bartlett:
         bartlettWindow(windowBuf, impulseLen);
         break;
-    case WINDOW_BLACKMAN:
+    case WINDOW_Blackman:
         blackmanWindow(windowBuf, impulseLen);
         break;
     }
