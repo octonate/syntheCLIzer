@@ -12,6 +12,7 @@
 #define FILTER_BUF_SIZE 512
 #define MODULE_BUF_SIZE 16
 
+
 enum {
     OSCS_LEN = 16,
     ENVS_LEN = 16,
@@ -53,8 +54,6 @@ struct Oscillator {
     struct {
         uint16_t t;
     } _priv;
-
-    int16_t out;
 };
 
 struct Envelope {
@@ -68,32 +67,27 @@ struct Envelope {
         bool prevGate;
         uint32_t t;
         int16_t releaseSample;
+        int16_t prevOut;
     } _priv;
-
-    int16_t out;
 };
 
 struct Amplifier {
     int16_t *sampleIn;
     float *gain;
-    int16_t out;
 };
 
 struct Distortion {
     int16_t *sampleIn;
     float *slope;
-    int16_t out;
 };
 
 struct Attenuator {
     int16_t *sampleIn;
     int16_t *amount;
-    int16_t out;
 };
 
 struct Mixer {
     int16_t **samplesIn;
-    int16_t out;
 };
 
 struct Filter {
@@ -109,19 +103,42 @@ struct Filter {
         size_t samplesBufIdx;
         int16_t prevCutoff;
     } _priv;
+};
 
+//struct Synth {
+//    struct Oscillator oscs[OSCS_LEN];
+//    struct Envelope envs[ENVS_LEN];
+//    struct Amplifier amps[AMPS_LEN];
+//    struct Distortion dists[DISTS_LEN];
+//    struct Attenuator attrs[ATTRS_LEN];
+//    struct Mixer mixers[MIXERS_LEN];
+//    struct Filter filters[FILTERS_LEN];
+//    struct Scope *scope;
+//    struct {
+//        bool isInit;
+//    } _priv;
+//    int16_t *outPtr;
+//};
+
+enum SynthModuleType {
+    MODULE_Oscillator,
+    MODULE_Envelope,
+    MODULE_Amplifier,
+    MODULE_Distortion,
+    MODULE_Attenuator,
+    MODULE_Mixer,
+    MODULE_Filter,
+};
+
+struct SynthModule {
+    void *ptr;
+    int16_t tag;
     int16_t out;
 };
 
 struct Synth {
-    struct Oscillator oscs[OSCS_LEN];
-    struct Envelope envs[ENVS_LEN];
-    struct Amplifier amps[AMPS_LEN];
-    struct Distortion dists[DISTS_LEN];
-    struct Attenuator attrs[ATTRS_LEN];
-    struct Mixer mixers[MIXERS_LEN];
-    struct Filter filters[FILTERS_LEN];
-    struct Scope *scope;
+    struct SynthModule *modules;
+    size_t modulesLen;
     struct {
         bool isInit;
     } _priv;
@@ -129,6 +146,7 @@ struct Synth {
 };
 
 void synthRun(struct Synth *synth);
+void modulesRun(struct Synth2 *synth);
 
 float sampleToFreq(int16_t sample);
 int16_t freqToSample(float freq);

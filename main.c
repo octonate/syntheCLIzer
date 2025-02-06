@@ -7,12 +7,13 @@
 #include "engine.h"
 #include "tui.h"
 
-
 #define NULL_TERM_ARR(type, ...) (type[]) {__VA_ARGS__, NULL}
+#define MODULE(T, ...) (struct SynthModule){ .tag = MODULE_ ## T, .ptr = &(struct T){__VA_ARGS__ }}
 
 #define PTR(x) &(int16_t){x}
 #define PTRF(x) &(float){x}
 
+typedef struct Oscillator Oscillator;
 
 struct Userdata {
     struct Synth *synth;
@@ -86,41 +87,49 @@ int main(void) {
 
     termInit();
 
-    struct Userdata callbackData;
+    struct Userdata callbackData = {0};
 
-    struct Synth synth = {
-        .oscs[0] = {
+    struct SynthModule modules[] = {
+        [0] = MODULE(Oscillator,
             .freqSample = &callbackData.inputFreq,
             .waveform = PTR(WAV_SQUARE),
             .amt = PTR(floatToAmt(0.25)),
-        },
-        .oscs[1] = {
+        ),
+        [1] = MODULE(Oscillator,
             .freqSample = &callbackData.inputFreq,
             .waveform = PTR(WAV_SAW),
             .amt = PTR(floatToAmt(0.25))
-        },
+        ),
 
-        .mixers[0].samplesIn = NULL_TERM_ARR(int16_t*, &synth.oscs[0].out, &synth.oscs[1].out),
+        [2] = MODULE(Mixer,
+            .samplesIn = NULL_TERM_ARR(int16_t*, &modules[0].out, &modules[1].out),
+        ),
 
-        .filters[0] = {
-            .sampleIn = &synth.mixers[0].out,
-            .cutoff = &synth.envs[0].out,
+        [3] = MODULE(Filter,
+            .sampleIn = &modules[2].out,
+            .cutoff = &modules[4].out,
             .impulseLen = 128,
-            .window = WINDOW_HAMMING,
-        },
+            .window = WINDOW_HANN,
+        ),
 
-        .envs[0] = {
+        [4] = MODULE(Envelope,
             .gate = &callbackData.gate,
             .attackMs = PTRF(80),
             .decayMs = PTRF(150),
             .sustain = PTRF(freqToSample(1000)),
             .releaseMs = PTRF(1000),
-        },
+        ),
+    };
 
-        .outPtr = &synth.filters[0].out,
+    struct Synth synth = {
+        .modules = modules,
+        .modulesLen = sizeof(modules) / sizeof(modules[0]),
+        .outPtr = &modules[3].out
     };
 
     callbackData.synth = &synth;
+
+
 
     int err;
     struct SoundIo *soundio = soundio_create();
@@ -168,9 +177,14 @@ int main(void) {
         return 1;
     }
 
+
+
+
     while (callbackData.quit != true) {
         updateInput(&callbackData);
     }
+
+    sftTest();
     
     soundio_outstream_destroy(outstream);
     soundio_device_unref(device);

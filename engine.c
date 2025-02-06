@@ -87,8 +87,12 @@ void recursiveFFT(const Cplx *inBuf, Cplx *outBuf, size_t bufLen) {
     }
 }
 
-void slowFFT(const Cplx *inBuf, Cplx *outBuf, size_t bufLen) {
-    recursiveFFT(inBuf, outBuf, bufLen);
+void slowFFT(const int16_t *inBuf, Cplx *outBuf, size_t bufLen) {
+    Cplx cplxInBuf[bufLen];
+    for (size_t i = 0; i < bufLen; i++) {
+        cplxInBuf[i] = (Cplx){ .real = inBuf[i] };
+    }
+    recursiveFFT(cplxInBuf, outBuf, bufLen);
     for (size_t i = 0; i < bufLen; i++) {
         outBuf[i] = cplxScale(outBuf[i], 1.0f / bufLen);
     }
@@ -104,23 +108,21 @@ void printFourier(Cplx *fourier, size_t fourierLen, float sampleRate) {
 
 void sftTest(void) {
     int16_t samples[128];
-    int16_t samples2[128];
     float freq = 1300;
     float freq2 = 12000;
     float amplitude = 1000;
     float sampleRate = SAMPLE_RATE;
     for (int i = 0; i < 128; i++) {
-        samples[i] = amplitude * sinf(M_TAU * i * freq / sampleRate);
-        samples2[i] = amplitude * sinf(M_TAU * i * freq2 / sampleRate);
-    }
-    Cplx samplesCplx[128];
-    for (int i = 0; i < 128; i++) {
-        samplesCplx[i] = (Cplx){ .real = samples[i] + samples2[i] };
+        samples[i] = 
+            amplitude
+            * sinf(M_TAU * i * freq / sampleRate)
+            + amplitude
+            * sinf(M_TAU * i * freq2 / sampleRate);
     }
     Cplx fourierSFT[128];
     Cplx fourierFFT[128];
     slowFourierTransform(samples, fourierSFT, 128);
-    slowFFT(samplesCplx, fourierFFT, 128);
+    slowFFT(samples, fourierFFT, 128);
     printf("slow:\n");
     printFourier(fourierSFT, 128, sampleRate);
     printf("\n\n\nfast:\n");
@@ -138,7 +140,7 @@ static float sinc(float x) {
     return x == 0 ? 1 : sinf(x) / x;
 }
 
-static void mixerRun(struct Mixer *mixer) {
+static int16_t mixerRun(struct Mixer *mixer) {
     int32_t total = 0;
     size_t len;
     for (len = 0; mixer->samplesIn[len] != NULL; len++) {
@@ -146,12 +148,17 @@ static void mixerRun(struct Mixer *mixer) {
     }
     if (total > INT16_MAX) total = INT16_MAX;
     if (total < INT16_MIN) total = INT16_MIN;
-    mixer->out = total;
+    return total;
 }
 
-static void distRun(struct Distortion *distortion) {
+static int16_t distRun(struct Distortion *distortion) {
     float x = (float) (*distortion->sampleIn + INT16_MAX) / (INT16_MAX - INT16_MIN);
-    distortion->out = (INT16_MAX - INT16_MIN) * powf(x, *distortion->slope) / (powf(x, *distortion->slope) + powf(1 - x, *distortion->slope)) + INT16_MIN;
+    return (
+        (INT16_MAX - INT16_MIN)
+        * powf(x, *distortion->slope)
+        / (powf(x, *distortion->slope) + powf(1 - x, *distortion->slope))
+        + INT16_MIN
+    );
 }
 
 float sampleToFreq(int16_t sample) {
@@ -163,7 +170,10 @@ int16_t freqToSample(float freq) {
 }
 
 float sampleToFloat(int16_t sample, float rangeMin, float rangeMax) {
-    float floatOut = (rangeMax + rangeMin) / 2 + sample * (rangeMax - rangeMin) / (INT16_MAX - INT16_MIN);
+    float floatOut =
+        (rangeMax + rangeMin) / 2
+        + sample * (rangeMax - rangeMin) / (INT16_MAX - INT16_MIN);
+
     // floating point is annoying
     if (floatOut < rangeMin) {
         return rangeMin;
@@ -184,10 +194,9 @@ static int16_t randqd(void) {
     return nextRand;
 }
 
-static void oscRun(struct Oscillator *osc) {
+static int16_t oscRun(struct Oscillator *osc) {
     if (*osc->waveform == WAV_NOISE) {
-        osc->out = randqd();
-        return;
+        return randqd();
     }
 
     float freq = sampleToFreq(*osc->freqSample);
@@ -220,25 +229,25 @@ static void oscRun(struct Oscillator *osc) {
         break;
     }
     osc->_priv.t += 1;
-    osc->out = sample;
+    return sample;
 }
 
-static void ampRun(struct Amplifier *amp) {
+static int16_t ampRun(struct Amplifier *amp) {
     float sampleOut = *amp->sampleIn * *amp->gain;
     if (sampleOut > INT16_MAX) {
-        amp->out = INT16_MAX;
+        return INT16_MAX;
     } else if (sampleOut < INT16_MIN) {
-        amp->out = INT16_MIN;
+        return INT16_MIN;
     } else {
-        amp->out = sampleOut;
+        return sampleOut;
     }
 }
 
-static void attrRun(struct Attenuator *attr) {
-    attr->out = *attr->sampleIn * (*attr->amount - INT16_MIN) / (INT16_MAX - INT16_MIN);
+static int16_t attrRun(struct Attenuator *attr) {
+    return *attr->sampleIn * (*attr->amount - INT16_MIN) / (INT16_MAX - INT16_MIN);
 }
 
-static void envRun(struct Envelope *env) {
+static int16_t envRun(struct Envelope *env) {
     uint32_t attackPeriod = *env->attackMs * SAMPLE_RATE / 1000.0f;
     uint32_t decayPeriod = *env->decayMs * SAMPLE_RATE / 1000.0f;
     uint32_t releasePeriod = *env->releaseMs * SAMPLE_RATE / 1000.0f;
@@ -251,22 +260,29 @@ static void envRun(struct Envelope *env) {
     }
     if (*env->gate == false && env->_priv.prevGate == true) {
         env->_priv.t = attackPeriod + decayPeriod;
-        env->_priv.releaseSample = env->out;
+        env->_priv.releaseSample = env->_priv.prevOut;
     }
 
     env->_priv.prevGate = *env->gate;
 
     if (*env->gate == false) {
         // release case
-        if (env->_priv.t >= attackPeriod + decayPeriod && env->_priv.t < attackPeriod + decayPeriod + releasePeriod) {
-            sample = (int16_t) (env->_priv.releaseSample - (env->_priv.t - attackPeriod - decayPeriod) * (env->_priv.releaseSample - INT16_MIN) / releasePeriod);
+        if (env->_priv.t >= attackPeriod + decayPeriod
+            && env->_priv.t < attackPeriod + decayPeriod + releasePeriod)
+        {
+            sample = (int16_t)
+                (env->_priv.releaseSample
+                 - (env->_priv.t - attackPeriod - decayPeriod)
+                 * (env->_priv.releaseSample - INT16_MIN)
+                 / releasePeriod);
+
             env->_priv.t += 1;
-            env->out = sample;
         } else {
-            env->out = INT16_MIN;
+            sample = INT16_MIN;
         }
 
-        return;
+        env->_priv.prevOut = sample;
+        return sample;
     }
 
     if (env->_priv.t < attackPeriod) {
@@ -279,7 +295,8 @@ static void envRun(struct Envelope *env) {
         sample = sustain;
     } 
 
-    env->out = sample;
+    env->_priv.prevOut = sample;
+    return sample;
 }
 
 static void rectangularWindow(float *windowBuf, size_t impulseLen) {
@@ -336,7 +353,7 @@ static void createFirWindow(float windowBuf[FILTER_BUF_SIZE], enum FirWindowType
     }
 }
 
-static void filterRun(struct Filter *filter) {
+static int16_t filterRun(struct Filter *filter) {
     filter->_priv.samplesBuf[filter->_priv.samplesBufIdx] = *filter->sampleIn;
     if (++filter->_priv.samplesBufIdx == filter->impulseLen) {
         filter->_priv.samplesBufIdx = 0;
@@ -348,7 +365,12 @@ static void filterRun(struct Filter *filter) {
         float responseSum = 0;
 
         for (size_t i = 0; i < filter->impulseLen; i++) {
-            float nextImpulse = filter->_priv.windowBuf[i] * sinc(M_TAU * cutoffFreq / SAMPLE_RATE * (i - (filter->impulseLen - 1) / 2.0f));
+            float nextImpulse =
+                filter->_priv.windowBuf[i]
+                * sinc(
+                    M_TAU * cutoffFreq / SAMPLE_RATE
+                    * (i - (filter->impulseLen - 1) / 2.0f));
+
             filter->_priv.impulseResponse[i] = nextImpulse;
             responseSum += nextImpulse;
         }
@@ -368,24 +390,51 @@ static void filterRun(struct Filter *filter) {
         sampleOut += filter->_priv.samplesBuf[sumIdx] * filter->_priv.impulseResponse[i];
     }
 
-    if (filter->_priv.samplesBufIdx == 0) {
-        //Cplx fourier[filter->impulseLen / 2];
-        //slowFourierTransform(filter->_priv.samplesBuf, fourier, filter->_priv.samplesBufIdx);
-        //printFourier(fourier, filter->impulseLen / 2);
-        //for (size_t i = 0; i < filter->impulseLen; i++) {
-        //    printf("%d\n", filter->_priv.samplesBuf[i]);
-        //}
-        //printf("\n\n\n");
-    }
-
     filter->_priv.prevCutoff = *filter->cutoff;
-    filter->out = sampleOut;
+    return sampleOut;
 }
 
-static void synthInit(struct Synth *synth) {
-    for (size_t i = 0; i < FILTERS_LEN; i++) {
-        struct Filter *filter = &synth->filters[i];
-        createFirWindow(filter->_priv.windowBuf, filter->window, filter->impulseLen);
+//static void synthInit(struct Synth *synth) {
+//    for (size_t i = 0; i < FILTERS_LEN; i++) {
+//        struct Filter *filter = &synth->filters[i];
+//        createFirWindow(filter->_priv.windowBuf, filter->window, filter->impulseLen);
+//    }
+//}
+
+//void synthRun(struct Synth *synth) {
+//    if (synth->_priv.isInit == false) {
+//        synthInit(synth);
+//        synth->_priv.isInit = true;
+//    }
+//    for (size_t i = 0; synth->amps[i].sampleIn != NULL && i < AMPS_LEN; i++) {
+//        ampRun(&synth->amps[i]);
+//    }
+//    for (size_t i = 0; synth->oscs[i].waveform != NULL && i < OSCS_LEN; i++) {
+//        oscRun(&synth->oscs[i]);
+//    }
+//    for (size_t i = 0; synth->mixers[i].samplesIn != NULL && i < MIXERS_LEN; i++) {
+//        mixerRun(&synth->mixers[i]);
+//    }
+//    for (size_t i = 0; synth->filters[i].sampleIn != NULL && i < FILTERS_LEN; i++) {
+//        filterRun(&synth->filters[i]);
+//    }
+//    for (size_t i = 0; synth->envs[i].gate != NULL && i < ENVS_LEN; i++) {
+//        envRun(&synth->envs[i]);
+//    }
+//    for (size_t i = 0; synth->dists[i].sampleIn != NULL && i < DISTS_LEN; i++) {
+//        distRun(&synth->dists[i]);
+//    }
+//    for (size_t i = 0; synth->attrs[i].sampleIn != NULL && i < ATTRS_LEN; i++) {
+//        attrRun(&synth->attrs[i]);
+//    }
+//} 
+
+void synthInit(struct Synth *synth) {
+    for (size_t i = 0; i < synth->modulesLen; i++) {
+        if (synth->modules[i].tag == MODULE_Filter) {
+            struct Filter *filter = synth->modules[i].ptr;
+            createFirWindow(filter->_priv.windowBuf, filter->window, filter->impulseLen);
+        }
     }
 }
 
@@ -394,26 +443,30 @@ void synthRun(struct Synth *synth) {
         synthInit(synth);
         synth->_priv.isInit = true;
     }
-    for (size_t i = 0; synth->amps[i].sampleIn != NULL && i < AMPS_LEN; i++) {
-        ampRun(&synth->amps[i]);
-    }
-    for (size_t i = 0; synth->oscs[i].waveform != NULL && i < OSCS_LEN; i++) {
-        oscRun(&synth->oscs[i]);
-    }
-    for (size_t i = 0; synth->mixers[i].samplesIn != NULL && i < MIXERS_LEN; i++) {
-        mixerRun(&synth->mixers[i]);
-    }
-    for (size_t i = 0; synth->filters[i].sampleIn != NULL && i < FILTERS_LEN; i++) {
-        filterRun(&synth->filters[i]);
-    }
-    for (size_t i = 0; synth->envs[i].gate != NULL && i < ENVS_LEN; i++) {
-        envRun(&synth->envs[i]);
-    }
-    for (size_t i = 0; synth->dists[i].sampleIn != NULL && i < DISTS_LEN; i++) {
-        distRun(&synth->dists[i]);
-    }
-    for (size_t i = 0; synth->attrs[i].sampleIn != NULL && i < ATTRS_LEN; i++) {
-        attrRun(&synth->attrs[i]);
+    for (size_t i = 0; i < synth->modulesLen; i++) {
+        void *ptr = synth->modules[i].ptr;
+        switch (synth->modules[i].tag) {
+        case MODULE_Oscillator:
+            synth->modules[i].out = oscRun(ptr);
+            break;
+        case MODULE_Envelope:
+            synth->modules[i].out = envRun(ptr);
+            break;
+        case MODULE_Amplifier:
+            synth->modules[i].out = ampRun(ptr);
+            break;
+        case MODULE_Distortion:
+            synth->modules[i].out = distRun(ptr);
+            break;
+        case MODULE_Attenuator:
+            synth->modules[i].out = attrRun(ptr);
+            break;
+        case MODULE_Mixer:
+            synth->modules[i].out = mixerRun(ptr);
+            break;
+        case MODULE_Filter:
+            synth->modules[i].out = filterRun(ptr);
+            break;
+        }
     }
 }
-
