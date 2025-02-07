@@ -12,17 +12,6 @@
 #define FILTER_BUF_SIZE 512
 #define MODULE_BUF_SIZE 16
 
-
-enum {
-    OSCS_LEN = 16,
-    ENVS_LEN = 16,
-    AMPS_LEN = 16,
-    DISTS_LEN = 16,
-    ATTRS_LEN = 16,
-    MIXERS_LEN = 16,
-    FILTERS_LEN = 16
-};
-
 enum Waveform {
     WAV_Sine,
     WAV_Square,
@@ -39,11 +28,13 @@ enum FirWindowType {
     WINDOW_Blackman,
 };
 
-enum EnvStage {
+enum EnvelopeStage {
+    STAGE_Pending = 0,
     STAGE_Attack,
     STAGE_Decay,
     STAGE_Sustain,
     STAGE_Release,
+    STAGE_Finished
 };
 
 struct NoteInput {
@@ -71,10 +62,9 @@ struct EnvelopeAdsr {
     float *releaseMs;
 
     struct {
-        bool prevGate;
         uint32_t t;
         int16_t releaseSample;
-        int16_t prevOut;
+        enum EnvelopeStage stage;
     } _priv;
 };
 
@@ -84,8 +74,8 @@ struct EnvelopeAd {
     float *decayMs;
 
     struct {
-        bool prevGate;
         uint32_t t;
+        enum EnvelopeStage stage;
     } _priv;
 };
 
@@ -123,21 +113,6 @@ struct Filter {
     } _priv;
 };
 
-//struct Synth {
-//    struct Oscillator oscs[OSCS_LEN];
-//    struct Envelope envs[ENVS_LEN];
-//    struct Amplifier amps[AMPS_LEN];
-//    struct Distortion dists[DISTS_LEN];
-//    struct Attenuator attrs[ATTRS_LEN];
-//    struct Mixer mixers[MIXERS_LEN];
-//    struct Filter filters[FILTERS_LEN];
-//    struct Scope *scope;
-//    struct {
-//        bool isInit;
-//    } _priv;
-//    int16_t *outPtr;
-//};
-
 enum SynthModuleType {
     MODULE_Oscillator,
     MODULE_EnvelopeAdsr,
@@ -165,7 +140,6 @@ struct Synth {
 };
 
 void synthRun(struct Synth *synth);
-void modulesRun(struct Synth2 *synth);
 
 float sampleToFreq(int16_t sample);
 int16_t freqToSample(float freq);

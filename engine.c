@@ -258,85 +258,126 @@ static uint32_t msToFrames(float ms) {
     return ms * SAMPLE_RATE / 1000.0f;
 }
 
+static void printStage(enum EnvelopeStage stage) {
+    switch (stage) {
+    case STAGE_Pending:
+        printf("%s\n", "Pending");
+        break;
+    case STAGE_Attack:
+        printf("%s\n", "Attack");
+        break;
+    case STAGE_Decay:
+        printf("%s\n", "Decay");
+        break;
+    case STAGE_Sustain:
+        printf("%s\n", "Sustain");
+        break;
+    case STAGE_Release:
+        printf("%s\n", "Release");
+        break;
+    case STAGE_Finished:
+        printf("%s\n", "Finished");
+        break;
+    }
+}
 
 static int16_t envAdsrRun(struct EnvelopeAdsr *env) {
     uint32_t attackPeriod = msToFrames(*env->attackMs);
     uint32_t decayPeriod = msToFrames(*env->decayMs);
     uint32_t releasePeriod = msToFrames(*env->releaseMs);
-    int16_t sample;
 
-    int16_t sustain = *env->sustain;
+    enum EnvelopeStage nextStage = env->_priv.stage;
+    int16_t sample = INT16_MIN;
 
-    if (*env->gate == true && env->_priv.prevGate == false) {
+    switch (env->_priv.stage) {
+    case STAGE_Pending:
+        if (*env->gate == true) {
+            nextStage = STAGE_Attack;
+        }
+        break;
+    case STAGE_Attack:
+        sample = tToRange(env->_priv.t, 0, attackPeriod, INT16_MIN, INT16_MAX);
+        if (++env->_priv.t > attackPeriod) {
+            nextStage = STAGE_Decay;
+        }
+        if (*env->gate == false) {
+            env->_priv.releaseSample = sample;
+            nextStage = STAGE_Release;
+        }
+        break;
+    case STAGE_Decay:
+        sample = tToRange(env->_priv.t, 0, decayPeriod, INT16_MAX, *env->sustain);
+        if (++env->_priv.t > decayPeriod) {
+            nextStage = STAGE_Sustain;
+        }
+        if (*env->gate == false) {
+            env->_priv.releaseSample = sample;
+            nextStage = STAGE_Release;
+        }
+        break;
+    case STAGE_Sustain:
+        sample = *env->sustain;
+        if (*env->gate == false) {
+            env->_priv.releaseSample = sample;
+            nextStage = STAGE_Release;
+        }
+        break;
+    case STAGE_Release:
+        sample = tToRange(env->_priv.t, 0, releasePeriod, env->_priv.releaseSample, INT16_MIN);
+        if (++env->_priv.t > releasePeriod) {
+            nextStage = STAGE_Pending;
+        }
+        if (*env->gate == true) {
+            nextStage = STAGE_Attack;
+        }
+        break;
+    default: break;
+    }
+
+    if (nextStage != env->_priv.stage) {
         env->_priv.t = 0;
     }
-    if (*env->gate == false && env->_priv.prevGate == true) {
-        env->_priv.t = attackPeriod + decayPeriod;
-        env->_priv.releaseSample = env->_priv.prevOut;
-    }
 
-    env->_priv.prevGate = *env->gate;
-
-    if (*env->gate == false) {
-        // release case
-        if (env->_priv.t >= attackPeriod + decayPeriod
-            && env->_priv.t < attackPeriod + decayPeriod + releasePeriod)
-        {
-            //sample = (int16_t)
-            //    (env->_priv.releaseSample
-            //     - (env->_priv.t - attackPeriod - decayPeriod)
-            //     * (env->_priv.releaseSample - INT16_MIN)
-            //     / releasePeriod);
-            sample = tToRange(
-                env->_priv.t,
-                attackPeriod + decayPeriod,
-                attackPeriod + decayPeriod + releasePeriod,
-                env->_priv.releaseSample,
-                INT16_MIN
-            );
-
-            env->_priv.t += 1;
-        } else {
-            sample = INT16_MIN;
-        }
-
-        env->_priv.prevOut = sample;
-        return sample;
-    }
-
-    if (env->_priv.t < attackPeriod) {
-        //sample = env->_priv.t * 2 * INT16_MAX / attackPeriod + INT16_MIN;
-        sample = tToRange(env->_priv.t, 0, attackPeriod, INT16_MIN, INT16_MAX);
-        env->_priv.t += 1;
-    } else if (env->_priv.t < attackPeriod + decayPeriod) {
-        //sample = INT16_MAX - (env->_priv.t - attackPeriod) * (INT16_MAX - sustain) / decayPeriod;
-        sample = tToRange(env->_priv.t, attackPeriod, attackPeriod + decayPeriod, INT16_MAX, sustain);
-        env->_priv.t += 1;
-    } else {
-        sample = sustain;
-    } 
-
-    env->_priv.prevOut = sample;
+    env->_priv.stage = nextStage;
     return sample;
 }
+
+
 
 static int16_t envAdRun(struct EnvelopeAd *env) {
     uint32_t attackPeriod = msToFrames(*env->attackMs);
     uint32_t decayPeriod = msToFrames(*env->decayMs);
     int16_t sample = INT16_MIN;
 
-    if (*env->gate == true && env->_priv.prevGate == false) {
-        env->_priv.t = 0;
-    }
-
-    env->_priv.prevGate = *env->gate;
-    
-    if (env->_priv.t < attackPeriod) {
+    switch(env->_priv.stage) {
+    case STAGE_Pending:
+        if (*env->gate == true) {
+            env->_priv.stage = STAGE_Attack;
+            env->_priv.t = 0;
+        }
+        break;
+    case STAGE_Attack:
         sample = tToRange(env->_priv.t, 0, attackPeriod, INT16_MIN, INT16_MAX);
-        env->_priv.t += 1;
-    } else if (env->_priv.t <= attackPeriod + decayPeriod) {
-        sample = tToRange(env->_priv.t, attackPeriod, attackPeriod + decayPeriod, INT16_MAX, INT16_MIN);
-        env->_priv.t += 1;
+        if (++env->_priv.t > attackPeriod) {
+            env->_priv.stage = STAGE_Decay;
+            env->_priv.t = 0;
+        }
+        break;
+    case STAGE_Decay:
+        sample = tToRange(env->_priv.t, 0, decayPeriod, INT16_MAX, INT16_MIN);
+        if (++env->_priv.t > decayPeriod) {
+            env->_priv.stage = STAGE_Finished;
+            env->_priv.t = 0;
+        }
+        break;
+    case STAGE_Finished:
+        if (*env->gate == false) {
+            env->_priv.stage = STAGE_Pending;
+            env->_priv.t = 0;
+        }
+        break;
+    default:
+        break;
     }
 
     return sample;
@@ -436,41 +477,6 @@ static int16_t filterRun(struct Filter *filter) {
     filter->_priv.prevCutoff = *filter->cutoff;
     return sampleOut;
 }
-
-//static void synthInit(struct Synth *synth) {
-//    for (size_t i = 0; i < FILTERS_LEN; i++) {
-//        struct Filter *filter = &synth->filters[i];
-//        createFirWindow(filter->_priv.windowBuf, filter->window, filter->impulseLen);
-//    }
-//}
-
-//void synthRun(struct Synth *synth) {
-//    if (synth->_priv.isInit == false) {
-//        synthInit(synth);
-//        synth->_priv.isInit = true;
-//    }
-//    for (size_t i = 0; synth->amps[i].sampleIn != NULL && i < AMPS_LEN; i++) {
-//        ampRun(&synth->amps[i]);
-//    }
-//    for (size_t i = 0; synth->oscs[i].waveform != NULL && i < OSCS_LEN; i++) {
-//        oscRun(&synth->oscs[i]);
-//    }
-//    for (size_t i = 0; synth->mixers[i].samplesIn != NULL && i < MIXERS_LEN; i++) {
-//        mixerRun(&synth->mixers[i]);
-//    }
-//    for (size_t i = 0; synth->filters[i].sampleIn != NULL && i < FILTERS_LEN; i++) {
-//        filterRun(&synth->filters[i]);
-//    }
-//    for (size_t i = 0; synth->envs[i].gate != NULL && i < ENVS_LEN; i++) {
-//        envRun(&synth->envs[i]);
-//    }
-//    for (size_t i = 0; synth->dists[i].sampleIn != NULL && i < DISTS_LEN; i++) {
-//        distRun(&synth->dists[i]);
-//    }
-//    for (size_t i = 0; synth->attrs[i].sampleIn != NULL && i < ATTRS_LEN; i++) {
-//        attrRun(&synth->attrs[i]);
-//    }
-//} 
 
 void synthInit(struct Synth *synth) {
     for (size_t i = 0; i < synth->modulesLen; i++) {
