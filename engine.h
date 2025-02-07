@@ -76,6 +76,19 @@ struct EnvelopeAr {
     } _priv;
 };
 
+struct EnvelopeAdr {
+    bool *gate;
+    float *attackMs;
+    float *decayMs;
+    float *releaseMs;
+
+    struct {
+        uint32_t t;
+        int16_t releaseSample;
+        enum EnvelopeStage stage;
+    } _priv;
+};
+
 struct EnvelopeAdsr {
     bool *gate;
     float *attackMs;
@@ -128,6 +141,7 @@ enum SynthModuleType {
     MODULE_Oscillator,
     MODULE_EnvelopeAd,
     MODULE_EnvelopeAr,
+    MODULE_EnvelopeAdr,
     MODULE_EnvelopeAdsr,
     MODULE_Amplifier,
     MODULE_Distortion,

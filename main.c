@@ -109,7 +109,7 @@ int main(void) {
             .sampleIn = &modules[2].out,
             .cutoff = &modules[5].out,
             .impulseLen = 128,
-            .window = WINDOW_Hann,
+            .window = WINDOW_Blackman,
         ),
 
         [4] = MODULE(EnvelopeAdsr,
@@ -119,9 +119,10 @@ int main(void) {
             .sustain = PTRF(freqToSample(1000)),
             .releaseMs = PTRF(2000),
         ),
-        [5] = MODULE(EnvelopeAr,
+        [5] = MODULE(EnvelopeAdr,
             .gate = &callbackData.gate,
             .attackMs = PTRF(500),
+            .decayMs = PTRF(12000),
             .releaseMs = PTRF(2000),
         )
     };

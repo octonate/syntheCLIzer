@@ -191,7 +191,6 @@ static int16_t distRun(struct Distortion *distortion) {
     );
 }
 
-
 void srandqd(int32_t seed) {
     nextRand = seed;
 }
@@ -353,6 +352,66 @@ static int16_t envArRun(struct EnvelopeAr *env) {
         }
         if (*env->gate == true) {
             nextStage = STAGE_Attack;
+        }
+        break;
+    default: break;
+    }
+
+    if (nextStage != env->_priv.stage) {
+        env->_priv.t = 0;
+    }
+
+    env->_priv.stage = nextStage;
+    return sample;
+}
+
+static int16_t envAdrRun(struct EnvelopeAdr *env) {
+    uint32_t attackPeriod = msToFrames(*env->attackMs);
+    uint32_t decayPeriod = msToFrames(*env->decayMs);
+    uint32_t releasePeriod = msToFrames(*env->releaseMs);
+    enum EnvelopeStage nextStage = env->_priv.stage;
+    int16_t sample = INT16_MIN;
+
+    printStage(env->_priv.stage);
+
+    switch (env->_priv.stage) {
+    case STAGE_Pending:
+        if (*env->gate == true) {
+            nextStage = STAGE_Attack;
+        }
+        break;
+    case STAGE_Attack:
+        sample = tToRange(env->_priv.t, 0, attackPeriod, INT16_MIN, INT16_MAX);
+        if (++env->_priv.t > attackPeriod) {
+            nextStage = STAGE_Decay;
+        }
+        if (*env->gate == false) {
+            env->_priv.releaseSample = sample;
+            nextStage = STAGE_Release;
+        }
+        break;
+    case STAGE_Decay:
+        sample = tToRange(env->_priv.t, 0, decayPeriod, INT16_MAX, INT16_MIN);
+        if (++env->_priv.t > decayPeriod) {
+            nextStage = STAGE_Finished;
+        }
+        if (*env->gate == false) {
+            env->_priv.releaseSample = sample;
+            nextStage = STAGE_Release;
+        }
+        break;
+    case STAGE_Release:
+        sample = tToRange(env->_priv.t, 0, releasePeriod, env->_priv.releaseSample, INT16_MIN);
+        if (++env->_priv.t > releasePeriod) {
+            nextStage = STAGE_Pending;
+        }
+        if (*env->gate == true) {
+            nextStage = STAGE_Attack;
+        }
+        break;
+    case STAGE_Finished:
+        if (*env->gate == false) {
+            nextStage = STAGE_Pending;
         }
         break;
     default: break;
@@ -546,6 +605,9 @@ void synthRun(struct Synth *synth) {
             break;
         case MODULE_EnvelopeAr:
             synth->modules[i].out = envArRun(ptr);
+            break;
+        case MODULE_EnvelopeAdr:
+            synth->modules[i].out = envAdrRun(ptr);
             break;
         case MODULE_EnvelopeAdsr:
             synth->modules[i].out = envAdsrRun(ptr);
