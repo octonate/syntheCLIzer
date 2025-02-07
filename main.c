@@ -107,7 +107,7 @@ int main(void) {
 
         [3] = MODULE(Filter,
             .sampleIn = &modules[2].out,
-            .cutoff = &modules[4].out,
+            .cutoff = &modules[5].out,
             .impulseLen = 128,
             .window = WINDOW_Hann,
         ),
@@ -119,11 +119,11 @@ int main(void) {
             .sustain = PTRF(freqToSample(1000)),
             .releaseMs = PTRF(2000),
         ),
-        [5] = MODULE(EnvelopeAd,
+        [5] = MODULE(EnvelopeAr,
             .gate = &callbackData.gate,
-            .attackMs = PTRF(5000),
-            .decayMs = PTRF(2500),
-        ),
+            .attackMs = PTRF(500),
+            .releaseMs = PTRF(2000),
+        )
     };
 
     struct Synth synth = {

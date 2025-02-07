@@ -54,6 +54,28 @@ struct Oscillator {
     } _priv;
 };
 
+struct EnvelopeAd {
+    bool *gate;
+    float *attackMs;
+    float *decayMs;
+
+    struct {
+        uint32_t t;
+        enum EnvelopeStage stage;
+    } _priv;
+};
+
+struct EnvelopeAr {
+    bool *gate;
+    float *attackMs;
+    float *releaseMs;
+
+    struct {
+        uint32_t t;
+        enum EnvelopeStage stage;
+    } _priv;
+};
+
 struct EnvelopeAdsr {
     bool *gate;
     float *attackMs;
@@ -64,17 +86,6 @@ struct EnvelopeAdsr {
     struct {
         uint32_t t;
         int16_t releaseSample;
-        enum EnvelopeStage stage;
-    } _priv;
-};
-
-struct EnvelopeAd {
-    bool *gate;
-    float *attackMs;
-    float *decayMs;
-
-    struct {
-        uint32_t t;
         enum EnvelopeStage stage;
     } _priv;
 };
@@ -115,8 +126,9 @@ struct Filter {
 
 enum SynthModuleType {
     MODULE_Oscillator,
-    MODULE_EnvelopeAdsr,
     MODULE_EnvelopeAd,
+    MODULE_EnvelopeAr,
+    MODULE_EnvelopeAdsr,
     MODULE_Amplifier,
     MODULE_Distortion,
     MODULE_Attenuator,
