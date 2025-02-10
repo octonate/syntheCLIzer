@@ -32,6 +32,7 @@ enum EnvelopeStage {
     STAGE_Pending = 0,
     STAGE_Attack,
     STAGE_Decay,
+    STAGE_Decay2,
     STAGE_Sustain,
     STAGE_Release,
     STAGE_Finished
@@ -58,6 +59,7 @@ struct EnvelopeAd {
     bool *gate;
     float *attackMs;
     float *decayMs;
+    float *easing;
 
     struct {
         uint32_t t;
@@ -69,6 +71,7 @@ struct EnvelopeAr {
     bool *gate;
     float *attackMs;
     float *releaseMs;
+    float *easing;
 
     struct {
         uint32_t t;
@@ -81,6 +84,7 @@ struct EnvelopeAdr {
     float *attackMs;
     float *decayMs;
     float *releaseMs;
+    float *easing;
 
     struct {
         uint32_t t;
@@ -95,6 +99,23 @@ struct EnvelopeAdsr {
     float *decayMs;
     float *sustain;
     float *releaseMs;
+    float *easing;
+
+    struct {
+        uint32_t t;
+        int16_t releaseSample;
+        enum EnvelopeStage stage;
+    } _priv;
+};
+
+struct EnvelopeAdbdr {
+    bool *gate;
+    float *attackMs;
+    float *decay1Ms;
+    float *breakPoint;
+    float *decay2Ms;
+    float *releaseMs;
+    float *easing;
 
     struct {
         uint32_t t;
@@ -143,6 +164,7 @@ enum SynthModuleType {
     MODULE_EnvelopeAr,
     MODULE_EnvelopeAdr,
     MODULE_EnvelopeAdsr,
+    MODULE_EnvelopeAdbdr,
     MODULE_Amplifier,
     MODULE_Distortion,
     MODULE_Attenuator,

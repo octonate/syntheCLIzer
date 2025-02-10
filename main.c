@@ -98,39 +98,31 @@ int main(void) {
         [1] = MODULE(Oscillator,
             .freqSample = &callbackData.inputFreq,
             .waveform = PTR(WAV_Saw),
-            .amt = PTR(floatToAmt(0.25))
+            .amt = &modules[4].out,
         ),
-
         [2] = MODULE(Mixer,
             .samplesIn = NULL_TERM_ARR(int16_t*, &modules[0].out, &modules[1].out),
         ),
-
         [3] = MODULE(Filter,
             .sampleIn = &modules[2].out,
-            .cutoff = &modules[5].out,
+            .cutoff = &modules[4].out,
             .impulseLen = 128,
             .window = WINDOW_Blackman,
         ),
-
         [4] = MODULE(EnvelopeAdsr,
             .gate = &callbackData.gate,
-            .attackMs = PTRF(300),
-            .decayMs = PTRF(100),
-            .sustain = PTRF(freqToSample(1000)),
-            .releaseMs = PTRF(2000),
-        ),
-        [5] = MODULE(EnvelopeAdr,
-            .gate = &callbackData.gate,
             .attackMs = PTRF(500),
-            .decayMs = PTRF(12000),
+            .decayMs = PTRF(500),
+            .sustain = PTRF(floatToAmt(0.2)),
             .releaseMs = PTRF(2000),
+            .easing = PTRF(0.8)
         )
     };
 
     struct Synth synth = {
         .modules = modules,
         .modulesLen = sizeof(modules) / sizeof(modules[0]),
-        .outPtr = &modules[3].out
+        .outPtr = &modules[1].out
     };
 
     callbackData.synth = &synth;
